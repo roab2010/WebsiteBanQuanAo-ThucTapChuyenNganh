@@ -202,7 +202,7 @@ include './includes/header.php';
                             <input type="radio" name="payment_method" value="Banking" class="w-5 h-5 accent-black">
                             <div class="ml-3">
                                 <span class="block font-medium">Chuyển khoản ngân hàng (QR Code)</span>
-                                <span class="text-sm text-gray-500">MBank - 0397789902 - LAM QUOC BAO</span>
+                                <span class="text-sm text-gray-500">MOMO</span>
                             </div>
                         </label>
                     </div>

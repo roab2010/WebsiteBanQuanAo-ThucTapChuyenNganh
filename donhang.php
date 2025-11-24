@@ -1,0 +1,107 @@
+<?php
+session_start();
+include 'config/database.php';
+
+// 1. Kiểm tra đăng nhập
+if (!isset($_SESSION['user_id'])) {
+    header("Location: dangnhap.php");
+    exit();
+}
+
+$user_id = $_SESSION['user_id'];
+
+// 2. Lấy danh sách đơn hàng (Mới nhất lên đầu)
+$sql_orders = "SELECT * FROM DON_HANG WHERE nguoi_id = $user_id ORDER BY donhang_id DESC";
+$result_orders = mysqli_query($conn, $sql_orders);
+
+include './includes/header.php';
+?>
+
+<div class="container mx-auto px-4 py-12 min-h-screen">
+    <h1 class="text-3xl font-bold mb-8 uppercase tracking-wide border-b pb-4">Lịch sử đơn hàng</h1>
+
+    <?php if (mysqli_num_rows($result_orders) > 0): ?>
+        <div class="space-y-8">
+            <?php while ($order = mysqli_fetch_assoc($result_orders)):
+                $donhang_id = $order['donhang_id'];
+
+                // Xử lý màu sắc trạng thái
+                $status_color = 'bg-gray-100 text-gray-800'; // Mặc định (Chờ xử lý)
+                if (strpos($order['trangThaiTT'], 'Da thanh toan') !== false) {
+                    $status_color = 'bg-green-100 text-green-800';
+                } elseif ($order['trangThaiDH'] == 'Huy') {
+                    $status_color = 'bg-red-100 text-red-800';
+                }
+            ?>
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+
+                    <div class="bg-gray-50 p-4 border-b border-gray-200 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                        <div>
+                            <span class="font-bold text-lg mr-2">Đơn hàng #<?php echo $donhang_id; ?></span>
+                            <span class="text-sm text-gray-500">
+                                Đặt ngày: <?php echo date('d/m/Y H:i', strtotime($order['ngayTao'])); ?>
+                            </span>
+                        </div>
+                        <div class="flex gap-2">
+                            <span class="px-3 py-1 rounded-full text-xs font-bold uppercase bg-blue-100 text-blue-800">
+                                <?php echo $order['trangThaiDH']; ?>
+                            </span>
+                            <span class="px-3 py-1 rounded-full text-xs font-bold uppercase <?php echo $status_color; ?>">
+                                <?php echo $order['trangThaiTT']; ?>
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="p-4">
+                        <?php
+                        // Lấy chi tiết sản phẩm của đơn này
+                        $sql_items = "SELECT ct.*, sp.ten, sp.hinhAnh 
+                                      FROM CHI_TIET_DON_HANG ct 
+                                      JOIN SAN_PHAM sp ON ct.sanpham_id = sp.sanpham_id 
+                                      WHERE ct.donhang_id = $donhang_id";
+                        $result_items = mysqli_query($conn, $sql_items);
+
+                        while ($item = mysqli_fetch_assoc($result_items)):
+                        ?>
+                            <div class="flex gap-4 mb-4 last:mb-0 items-center border-b last:border-0 pb-4 last:pb-0 border-gray-100">
+                                <img src="<?php echo htmlspecialchars($item['hinhAnh']); ?>" class="w-16 h-16 object-cover rounded border">
+                                <div class="flex-1">
+                                    <h4 class="font-bold text-sm"><?php echo htmlspecialchars($item['ten']); ?></h4>
+                                    <p class="text-xs text-gray-500">
+                                        Phân loại: <?php echo $item['size']; ?> | x<?php echo $item['soLuong']; ?>
+                                    </p>
+                                </div>
+                                <div class="text-right">
+                                    <span class="font-medium text-sm">
+                                        <?php echo number_format($item['donGia'], 0, ',', '.'); ?>₫
+                                    </span>
+                                </div>
+                            </div>
+                        <?php endwhile; ?>
+                    </div>
+
+                    <div class="p-4 bg-gray-50 border-t border-gray-200 flex justify-between items-center">
+                        <div class="text-sm text-gray-500">
+                            Thanh toán: <strong><?php echo $order['phuongThucTT']; ?></strong>
+                        </div>
+                        <div class="text-xl font-bold text-red-600">
+                            Tổng tiền: <?php echo number_format($order['tongTien'], 0, ',', '.'); ?>₫
+                        </div>
+                    </div>
+                </div>
+            <?php endwhile; ?>
+        </div>
+
+    <?php else: ?>
+        <div class="text-center py-16 bg-gray-50 rounded-lg">
+            <div class="text-6xl mb-4">📦</div>
+            <h2 class="text-xl font-bold mb-2">Bạn chưa có đơn hàng nào</h2>
+            <p class="text-gray-500 mb-6">Hãy dạo một vòng và chọn món đồ yêu thích nhé!</p>
+            <a href="index.php" class="inline-block bg-black text-white px-8 py-3 rounded font-bold hover:bg-gray-800 transition">
+                MUA SẮM NGAY
+            </a>
+        </div>
+    <?php endif; ?>
+</div>
+
+<?php include './includes/footer.php'; ?>
