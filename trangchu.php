@@ -67,7 +67,6 @@ if (!empty($search_query)) {
       <div class="search-container">
         <form method="GET" action="">
           <div class="search-box">
-            <span class="search-icon">🔍</span>
             <input type="text" name="search" placeholder="Tìm kiếm sản phẩm..." class="search-input" value="<?php echo htmlspecialchars($search_query); ?>">
             <button type="submit" class="search-btn">Tìm kiếm</button>
           </div>
