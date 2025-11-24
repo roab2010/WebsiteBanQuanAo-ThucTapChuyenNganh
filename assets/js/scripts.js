@@ -4,19 +4,19 @@
 // 1. CHỨC NĂNG YÊU THÍCH (Lưu vào LocalStorage)
 // ==============================================
 function addToWishlist(productId, productName) {
-  // Lấy danh sách cũ từ bộ nhớ trình duyệt (nếu chưa có thì tạo mảng rỗng)
+
   let wishlist = JSON.parse(localStorage.getItem('myWishlist')) || [];
 
-  // Kiểm tra xem sản phẩm này đã có chưa
+
   let exists = wishlist.find(item => item.id === productId);
 
   if (exists) {
-    alert(`Sản phẩm "${productName}" đã có trong danh sách yêu thích rồi! ❤️`);
+    showToast(`Sản phẩm "${productName}" đã có trong danh sách yêu thích!`, 'warning');
   } else {
-    // Thêm mới vào mảng
+
     wishlist.push({ id: productId, name: productName });
 
-    // Lưu ngược lại vào bộ nhớ trình duyệt
+
     localStorage.setItem('myWishlist', JSON.stringify(wishlist));
 
     showToast(`Đã thêm "${productName}" vào yêu thích!`, 'success');
@@ -115,4 +115,33 @@ function showToast(message, type = 'success') {
   setTimeout(() => {
     toast.remove();
   }, 3500);
+}
+
+
+
+// Xóa yêu thích 
+function removeFromWishlistPage(id, btn) {
+  // BỎ ĐOẠN NÀY ĐI: if(!confirm('Bỏ sản phẩm này...?')) return;
+
+  // Xóa trong LocalStorage
+  let wishlist = JSON.parse(localStorage.getItem('myWishlist')) || [];
+  wishlist = wishlist.filter(item => item.id !== id);
+  localStorage.setItem('myWishlist', JSON.stringify(wishlist));
+
+  // Xóa giao diện (Hiệu ứng mờ dần)
+  const card = btn.closest('.product-card');
+  card.style.transition = "all 0.3s ease";
+  card.style.opacity = '0';
+  card.style.transform = 'scale(0.9)';
+
+  setTimeout(() => {
+    card.remove();
+    // Kiểm tra nếu hết sản phẩm thì hiện thông báo trống
+    if (document.querySelectorAll('#wishlist-grid .product-card').length === 0) {
+      document.getElementById('wishlist-grid').innerHTML = '<div class="text-center col-span-full py-10"><p class="text-gray-500 text-lg">Bạn chưa yêu thích sản phẩm nào.</p></div>';
+    }
+  }, 300);
+
+  // Dùng Toast đẹp thay cho alert
+  showToast('Đã xóa sản phẩm khỏi danh sách yêu thích', 'success');
 }

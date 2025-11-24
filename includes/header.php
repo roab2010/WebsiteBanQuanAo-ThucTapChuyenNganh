@@ -77,7 +77,7 @@ if (isset($_SESSION['user_id'])) {
                     <a href="dangnhap.php" class="icon-link text-lg" title="Đăng nhập">👤</a>
                 <?php endif; ?>
 
-                <a href="#" class="icon-link text-lg" title="Yêu thích">❤️</a>
+                <a href="yeuthich.php" class="icon-link text-lg" title="Yêu thích">❤️</a>
 
                 <a href="giohang.php" class="icon-link relative text-lg" title="Giỏ hàng">
                     🛒
