@@ -13,5 +13,5 @@ $site_config = [
 ];
 ?>
 <script>
-window.SITE_CONFIG = <?php echo json_encode($site_config); ?>;
+    window.SITE_CONFIG = <?php echo json_encode($site_config); ?>;
 </script>

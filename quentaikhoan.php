@@ -22,7 +22,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
 // Nếu đã đăng nhập thì redirect về trang chủ
 if (isset($_SESSION['user'])) {
-    header("Location: trangchu.php");
+    header("Location: index.php");
     exit();
 }
 ?>
@@ -38,7 +38,7 @@ if (isset($_SESSION['user'])) {
     <header>
         <div class="header-container">
             <div class="nav-links">
-                <a href="trangchu.php" class="nav-link">Home</a>
+                <a href="index.php" class="nav-link">Home</a>
                 <span class="separator">|</span>
                 <a href="#" class="nav-link">Đồ Nam</a>
                 <span class="separator">|</span>

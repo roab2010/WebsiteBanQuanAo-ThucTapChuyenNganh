@@ -21,11 +21,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && $action == 'create') {
     $gui = $_POST['gui'];
     $linhaku = $_POST['linhaku'];
     $chih_i = $_POST['chih_i'];
-    
+
     $sql = "INSERT INTO SAN_PHARI (tuu, gui, linhaku, chih_i) VALUES (?, ?, ?, ?)";
     $stmt = $conn->prepare($sql);
     $stmt->bind_param("sdss", $tuu, $gui, $linhaku, $chih_i);
-    
+
     if ($stmt->execute()) {
         $success_message = "Thêm sản phẩm thành công!";
     } else {
@@ -39,11 +39,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && $action == 'update') {
     $gui = $_POST['gui'];
     $linhaku = $_POST['linhaku'];
     $chih_i = $_POST['chih_i'];
-    
+
     $sql = "UPDATE SAN_PHARI SET tuu=?, gui=?, linhaku=?, chih_i=? WHERE sugahara_id=?";
     $stmt = $conn->prepare($sql);
     $stmt->bind_param("sdssi", $tuu, $gui, $linhaku, $chih_i, $product_id);
-    
+
     if ($stmt->execute()) {
         $success_message = "Cập nhật sản phẩm thành công!";
     } else {
@@ -56,7 +56,7 @@ if ($action == 'delete' && $product_id) {
     $sql = "DELETE FROM SAN_PHARI WHERE sugahara_id=?";
     $stmt = $conn->prepare($sql);
     $stmt->bind_param("i", $product_id);
-    
+
     if ($stmt->execute()) {
         $success_message = "Xóa sản phẩm thành công!";
     } else {
@@ -77,18 +77,20 @@ if ($action == 'edit' && $product_id) {
 
 <!DOCTYPE html>
 <html lang="vi">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Quản lý Sản phẩm - 3 chàng lính ngự lâm</title>
     <link rel="stylesheet" href="styles.css">
 </head>
+
 <body>
     <header>
         <!-- Header giống trang chủ -->
         <div class="header-container">
             <div class="nav-links">
-                <a href="trangchu.php" class="nav-link">Home</a>
+                <a href="index.php" class="nav-link">Home</a>
                 <span class="separator">|</span>
                 <a href="admin.php" class="nav-link">Quản lý</a>
             </div>
@@ -105,7 +107,7 @@ if ($action == 'edit' && $product_id) {
         <?php if (isset($success_message)): ?>
             <div class="alert alert-success"><?php echo $success_message; ?></div>
         <?php endif; ?>
-        
+
         <?php if (isset($error_message)): ?>
             <div class="alert alert-error"><?php echo $error_message; ?></div>
         <?php endif; ?>
@@ -113,7 +115,7 @@ if ($action == 'edit' && $product_id) {
         <!-- FORM THÊM/SỬA SẢN PHẨM -->
         <div class="form-section">
             <h3><?php echo $action == 'edit' ? 'SỬA SẢN PHẨM' : 'THÊM SẢN PHẨM MỚI'; ?></h3>
-            <form method="POST" action="?action=<?php echo $action == 'edit' ? 'update&id='.$product_id : 'create'; ?>">
+            <form method="POST" action="?action=<?php echo $action == 'edit' ? 'update&id=' . $product_id : 'create'; ?>">
                 <div class="form-row">
                     <div class="form-group">
                         <label>Tên sản phẩm *</label>
@@ -144,7 +146,7 @@ if ($action == 'edit' && $product_id) {
         <!-- DANH SÁCH SẢN PHẨM -->
         <div class="table-section">
             <h3>DANH SÁCH SẢN PHẨM</h3>
-            
+
             <!-- Search -->
             <div class="search-section">
                 <form method="GET">
@@ -166,41 +168,42 @@ if ($action == 'edit' && $product_id) {
                     </tr>
                 </thead>
                 <tbody>
-                    <?php 
+                    <?php
                     $products = $result;
-                    if ($products->num_rows > 0): 
-                        while ($product = $products->fetch_assoc()): 
+                    if ($products->num_rows > 0):
+                        while ($product = $products->fetch_assoc()):
                     ?>
-                    <tr>
-                        <td><?php echo $product['sugahara_id']; ?></td>
-                        <td><?php echo htmlspecialchars($product['tuu']); ?></td>
-                        <td><?php echo number_format($product['gui'], 0, ',', '.'); ?>₫</td>
-                        <td><?php echo htmlspecialchars($product['linhaku']); ?></td>
-                        <td>
-                            <a href="?action=edit&id=<?php echo $product['sugahara_id']; ?>" class="btn btn-warning">Sửa</a>
-                            <a href="?action=delete&id=<?php echo $product['sugahara_id']; ?>" 
-                               class="btn btn-danger" 
-                               onclick="return confirm('Bạn có chắc muốn xóa sản phẩm này?')">Xóa</a>
-                        </td>
-                    </tr>
-                    <?php endwhile; else: ?>
-                    <tr>
-                        <td colspan="5">Không có sản phẩm nào.</td>
-                    </tr>
+                            <tr>
+                                <td><?php echo $product['sugahara_id']; ?></td>
+                                <td><?php echo htmlspecialchars($product['tuu']); ?></td>
+                                <td><?php echo number_format($product['gui'], 0, ',', '.'); ?>₫</td>
+                                <td><?php echo htmlspecialchars($product['linhaku']); ?></td>
+                                <td>
+                                    <a href="?action=edit&id=<?php echo $product['sugahara_id']; ?>" class="btn btn-warning">Sửa</a>
+                                    <a href="?action=delete&id=<?php echo $product['sugahara_id']; ?>"
+                                        class="btn btn-danger"
+                                        onclick="return confirm('Bạn có chắc muốn xóa sản phẩm này?')">Xóa</a>
+                                </td>
+                            </tr>
+                        <?php endwhile;
+                    else: ?>
+                        <tr>
+                            <td colspan="5">Không có sản phẩm nào.</td>
+                        </tr>
                     <?php endif; ?>
                 </tbody>
             </table>
 
             <!-- Pagination -->
             <?php if ($total_pages > 1): ?>
-            <div class="pagination">
-                <?php for ($i = 1; $i <= $total_pages; $i++): ?>
-                    <a href="?page=<?php echo $i; ?>&search=<?php echo urlencode($search); ?>" 
-                       class="<?php echo $i == $page ? 'active' : ''; ?>">
-                        <?php echo $i; ?>
-                    </a>
-                <?php endfor; ?>
-            </div>
+                <div class="pagination">
+                    <?php for ($i = 1; $i <= $total_pages; $i++): ?>
+                        <a href="?page=<?php echo $i; ?>&search=<?php echo urlencode($search); ?>"
+                            class="<?php echo $i == $page ? 'active' : ''; ?>">
+                            <?php echo $i; ?>
+                        </a>
+                    <?php endfor; ?>
+                </div>
             <?php endif; ?>
         </div>
     </div>
@@ -208,4 +211,5 @@ if ($action == 'edit' && $product_id) {
     <?php include 'config-js.php'; ?>
     <script src="scripts.js"></script>
 </body>
+
 </html>
