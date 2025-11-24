@@ -46,6 +46,7 @@ if (!empty($search_query)) {
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>3 chàng lính ngự lâm - Trang Chủ</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css" />
 </head>
 
@@ -120,7 +121,7 @@ if (!empty($search_query)) {
   <?php else: ?>
 
     <!-- Banner Section -->
-    <section class="banner">
+    <!-- <section class="banner">
       <div class="banner-text">
         <h2>MẶC ĐI SỢ *** GÌ</h2>
         <a href="#" class="btn btn-primary">Xem ngay</a>
@@ -128,10 +129,39 @@ if (!empty($search_query)) {
       <img
         src="./img/slide.jpg"
         alt="Banner thời trang" />
+    </section> -->
+
+    <!-- Hero Section -->
+    <section class="relative flex flex-col justify-center items-center text-center text-white h-screen overflow-hidden">
+
+
+      <div class="absolute inset-0">
+        <img src="./img/slide.jpg" alt="Background" class="w-full h-full object-cover brightness-50 blur-[1px]">
+        <div class="absolute inset-0 bg-black/40"></div>
+      </div>
+
+      <!-- Nội dung chính -->
+      <div class="relative z-10 px-6">
+        <h1 class="text-5xl md:text-6xl font-extrabold mb-4 drop-shadow-[0_4px_10px_rgba(0,0,0,0.6)]">
+          Mặc Đi <span class="text-red-600">Sợ *** Gì</span>
+        </h1>
+
+        <button
+          class="mt-8 px-8 py-3 border border-white/70 text-white font-semibold rounded-lg backdrop-blur-sm hover:bg-white/20 hover:scale-105 transition-all duration-300">
+          <a href="#">VIEW STORE</a>
+
+        </button>
+
+        <div class="mt-10">
+          <img src="./img/logo.png" alt="Team Logo"
+            class="mx-auto w-24 md:w-32 drop-shadow-[0_4px_12px_rgba(0,0,0,0.8)]">
+        </div>
+      </div>
+
     </section>
 
     <!-- Main Content -->
-    <main class="container">
+    <main class="main-wrapper">
       <!-- TOP -->
       <section class="category">
         <h2>TOP</h2>
@@ -145,6 +175,7 @@ if (!empty($search_query)) {
               <button class="btn btn-secondary" onclick="addToWishlist(1, 'BCB BLACK TEE')">Yêu thích</button>
             </div>
           </div>
+
           <div class="product-card">
             <img src="./img/WHITETEE.jpg" alt="white tee" />
             <h3>BCB WHITE TEE</h3>
@@ -267,6 +298,7 @@ if (!empty($search_query)) {
   <!-- JavaScript Configuration -->
   <?php include 'config-js.php'; ?>
   <script src="scripts.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
 </body>
 
 </html>
