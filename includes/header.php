@@ -48,7 +48,9 @@ if (isset($_SESSION['user_id'])) {
     <header class="sticky top-0 z-50 bg-white shadow-sm border-b border-gray-100">
         <div class="header-container">
             <div class="nav-links">
-                <a href="index.php" class="mg-5"><img src="../assets/img/logonho.png" class="h-16 w-20" alt=""></a>
+                <a href="index.php" class="mr-6">
+                    <img src="assets/img/logonho.png" class="h-16 w-auto object-contain" alt="Logo">
+                </a>
                 <a href="index.php" class="nav-link">Home</a>
                 <span class="separator">|</span>
                 <a href="#" class="nav-link">Top</a>
