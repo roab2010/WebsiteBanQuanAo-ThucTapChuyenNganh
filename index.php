@@ -5,7 +5,19 @@ include 'config/database.php';
 
 // Xử lý đăng xuất
 if (isset($_GET['logout'])) {
+  // 1. Xóa sạch session hiện tại (Đăng xuất)
   session_destroy();
+
+  // 2. MẸO: Khởi động lại một session MỚI ngay lập tức
+  session_start();
+
+  // 3. Gán thông báo vào session mới này
+  $_SESSION['alert'] = [
+    'type' => 'success',
+    'message' => 'Đăng xuất thành công! Hẹn gặp lại.'
+  ];
+
+  // 4. Chuyển hướng về trang đăng nhập
   header("Location: dangnhap.php");
   exit();
 }
