@@ -122,6 +122,17 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         </div>
     </div>
 
+    <div id="toast-container"></div>
+    <link rel="stylesheet" href="assets/css/styles.css">
+    <script src="assets/js/scripts.js"></script> <?php if (isset($_SESSION['alert'])): ?>
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                showToast("<?php echo $_SESSION['alert']['message']; ?>", "<?php echo $_SESSION['alert']['type']; ?>");
+            });
+        </script>
+        <?php unset($_SESSION['alert']); ?>
+    <?php endif; ?>
+
 </body>
 
 </html>

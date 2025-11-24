@@ -10,11 +10,22 @@ if (!isset($_SESSION['user_id'])) {
 
 $user_id = $_SESSION['user_id'];
 
+// Xử lý đăng xuất
+if (isset($_GET['logout'])) {
+    session_destroy();
+    header("Location: dangnhap.php");
+    exit();
+}
+
 // 2. Xử lý XÓA sản phẩm khỏi giỏ
 if (isset($_GET['delete'])) {
     $cart_id = intval($_GET['delete']);
     $sql_delete = "DELETE FROM GIO_HANG WHERE giohang_id = $cart_id AND nguoi_id = $user_id";
     mysqli_query($conn, $sql_delete);
+    $_SESSION['alert'] = [
+        'type' => 'success',
+        'message' => 'Đã xóa sản phẩm khỏi giỏ hàng.'
+    ];
     header("Location: giohang.php"); // Load lại trang để cập nhật
     exit();
 }
@@ -69,11 +80,11 @@ include './includes/header.php';
                                     </h3>
                                     <p class="text-xs text-gray-500 mt-1">Size: <span class="font-bold text-black"><?php echo $item['size']; ?></span></p>
 
-                                    <a href="giohang.php?delete=<?php echo $item['giohang_id']; ?>"
-                                        class="hidden md:inline-block text-xs text-red-500 hover:underline mt-2"
-                                        onclick="return confirm('Bạn chắc chắn muốn xóa?')">
+                                    <button type="button"
+                                        onclick="showConfirmModal('giohang.php?delete=<?php echo $item['giohang_id']; ?>')"
+                                        class="hidden md:inline-block text-xs text-red-500 hover:underline mt-2">
                                         Xóa bỏ
-                                    </a>
+                                    </button>
                                 </div>
                             </div>
 
@@ -143,5 +154,44 @@ include './includes/header.php';
         </div>
     <?php endif; ?>
 </div>
+<div id="confirmModal" class="fixed inset-0 z-[9999] hidden">
+    <div class="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity" onclick="closeConfirmModal()"></div>
 
+    <div class="relative bg-white w-full max-w-sm mx-auto mt-40 p-6 rounded-lg shadow-2xl animate-fade-in-up text-center">
+
+        <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
+            <svg class="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+        </div>
+
+        <h3 class="text-lg font-bold text-gray-900 mb-2">Xác nhận xóa?</h3>
+        <p class="text-gray-500 text-sm mb-6">Bạn có chắc chắn muốn xóa sản phẩm này khỏi giỏ hàng không? Hành động này không thể hoàn tác.</p>
+
+        <div class="flex gap-3 justify-center">
+            <button onclick="closeConfirmModal()"
+                class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded font-medium transition">
+                Hủy bỏ
+            </button>
+            <a id="confirmDeleteBtn" href="#"
+                class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded font-medium transition">
+                Đồng ý Xóa
+            </a>
+        </div>
+    </div>
+</div>
+
+<script>
+    function showConfirmModal(deleteUrl) {
+        // 1. Gán đường dẫn xóa vào nút "Đồng ý"
+        document.getElementById('confirmDeleteBtn').href = deleteUrl;
+        // 2. Hiện Modal
+        document.getElementById('confirmModal').classList.remove('hidden');
+    }
+
+    function closeConfirmModal() {
+        // Ẩn Modal
+        document.getElementById('confirmModal').classList.add('hidden');
+    }
+</script>
 <?php include './includes/footer.php'; ?>

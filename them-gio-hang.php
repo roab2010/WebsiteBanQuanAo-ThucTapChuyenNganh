@@ -31,13 +31,23 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['add_to_cart'])) {
                 VALUES ($nguoi_id, $sanpham_id, '$size', $soLuong)";
     }
 
-    // 3. Thực thi
     if (mysqli_query($conn, $sql)) {
-        echo "<script>alert('Đã thêm vào giỏ hàng thành công!'); window.location.href='index.php';</script>";
+        // 1. Tạo thông báo thành công
+        $_SESSION['alert'] = [
+            'type' => 'success',
+            'message' => 'Đã thêm sản phẩm vào giỏ hàng! 🛒'
+        ];
     } else {
-        echo "Lỗi: " . mysqli_error($conn);
+        // 2. Tạo thông báo lỗi
+        $_SESSION['alert'] = [
+            'type' => 'error',
+            'message' => 'Lỗi: ' . mysqli_error($conn)
+        ];
     }
-} else {
-    // Nếu ai đó cố truy cập trực tiếp file này
-    header("Location: index.php");
+
+    // 3. Quay trở lại trang trước đó (Trang chủ hoặc Trang chi tiết)
+    // $_SERVER['HTTP_REFERER'] là đường dẫn của trang vừa bấm nút
+    $back_url = $_SERVER['HTTP_REFERER'] ?? 'index.php';
+    header("Location: $back_url");
+    exit();
 }
