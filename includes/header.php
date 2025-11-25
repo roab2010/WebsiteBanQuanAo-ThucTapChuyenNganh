@@ -55,7 +55,7 @@ if (isset($_SESSION['user_id'])) {
                     <img src="<?php echo $logo_path; ?>" class="h-16 w-auto object-contain" alt="Logo">
                 </a>
 
-                <a href="index.php" class="nav-link">Home</a>
+                <a href="index.php" class="nav-link font-bold text-gray-800 hover:text-red-600 transition uppercase text-sm">Home</a>
                 <span class="separator">|</span>
 
                 <?php
@@ -66,7 +66,7 @@ if (isset($_SESSION['user_id'])) {
                 // Dùng vòng lặp in ra từng mục
                 while ($menu = mysqli_fetch_assoc($result_menu)) {
                 ?>
-                    <a href="danhmuc.php?id=<?php echo $menu['danhmuc_id']; ?>" class="nav-link uppercase">
+                    <a href="danhmuc.php?id=<?php echo $menu['danhmuc_id']; ?>" class="nav-link font-bold text-gray-800 hover:text-red-600 transition uppercase text-sm">
                         <?php echo htmlspecialchars($menu['ten']); ?>
                     </a>
                     <span class="separator last:hidden">|</span>
