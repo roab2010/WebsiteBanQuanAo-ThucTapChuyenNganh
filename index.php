@@ -124,8 +124,14 @@ include './includes/header.php';
     <?php foreach ($products_by_category as $categoryName => $products): ?>
       <section class="mb-16">
         <h2 class="text-3xl font-bold text-center mb-8 uppercase tracking-wider border-b-2 border-black inline-block mx-auto"><?php echo htmlspecialchars($categoryName); ?></h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          <?php foreach ($products as $product): ?>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+          <?php
+          // --- 1. LOGIC GIỚI HẠN SỐ LƯỢNG ---
+          $count = 0;
+          foreach ($products as $product):
+            if ($count >= 4) break; // Chỉ lấy 4 sản phẩm đầu tiên
+          ?>
 
             <div class="product-card group cursor-pointer"
               onclick="window.location.href='chitiet.php?id=<?php echo $product['sanpham_id']; ?>'">
@@ -153,11 +159,19 @@ include './includes/header.php';
                 <div class="text-gray-600"><?php echo number_format($product['gia'], 0, ',', '.'); ?>₫</div>
               </div>
             </div>
-          <?php endforeach; ?>
+          <?php
+            $count++; // Tăng biến đếm sau mỗi lần lặp
+          endforeach;
+          ?>
         </div>
       </section>
     <?php endforeach; ?>
-    <div class="text-center mt-12"><button class="border-2 border-black px-8 py-3 font-bold hover:bg-black hover:text-white transition" onclick="loadMore()">XEM THÊM SẢN PHẨM</button></div>
+
+    <div class="text-center mt-16 mb-12">
+      <a href="tat-ca-san-pham.php" class="inline-block border-2 border-black px-10 py-4 font-bold hover:bg-black hover:text-white transition uppercase tracking-widest text-sm">
+        XEM TẤT CẢ SẢN PHẨM
+      </a>
+    </div>
   </main>
 <?php endif; ?>
 

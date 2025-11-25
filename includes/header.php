@@ -14,7 +14,10 @@ require_once __DIR__ . '/../config/database.php';
 // 3. ĐỊNH NGHĨA BIẾN CHUNG
 $user = $_SESSION['user'] ?? null;
 $search_query = $search_query ?? ''; // Tránh lỗi undefined ở trang chi tiết
-
+$logo_path = 'assets/img/logonho.png';
+if (!file_exists($logo_path) && file_exists('../' . $logo_path)) {
+    $logo_path = '../' . $logo_path;
+}
 // 4. ĐẾM SỐ LƯỢNG GIỎ HÀNG
 $cart_count = 0;
 if (isset($_SESSION['user_id'])) {
@@ -48,18 +51,28 @@ if (isset($_SESSION['user_id'])) {
     <header class="sticky top-0 z-50 bg-white shadow-sm border-b border-gray-100">
         <div class="header-container">
             <div class="nav-links">
-                <a href="index.php" class="mr-6 flex items-center">
-                    <img src="assets/img/logonho.png" class="h-16 w-auto object-contain" alt="Logo">
+                <a href="index.php" class="mr-6">
+                    <img src="<?php echo $logo_path; ?>" class="h-16 w-auto object-contain" alt="Logo">
                 </a>
+
                 <a href="index.php" class="nav-link">Home</a>
                 <span class="separator">|</span>
-                <a href="#" class="nav-link">Top</a>
-                <span class="separator">|</span>
-                <a href="#" class="nav-link">Bottoms</a>
-                <span class="separator">|</span>
-                <a href="#" class="nav-link">OutWear</a>
-                <span class="separator">|</span>
-                <a href="#" class="nav-link">Accessories</a>
+
+                <?php
+                // Lấy danh mục từ DB để in ra Menu
+                $sql_menu = "SELECT * FROM DANH_MUC ORDER BY danhmuc_id ASC";
+                $result_menu = mysqli_query($conn, $sql_menu);
+
+                // Dùng vòng lặp in ra từng mục
+                while ($menu = mysqli_fetch_assoc($result_menu)) {
+                ?>
+                    <a href="danhmuc.php?id=<?php echo $menu['danhmuc_id']; ?>" class="nav-link uppercase">
+                        <?php echo htmlspecialchars($menu['ten']); ?>
+                    </a>
+                    <span class="separator last:hidden">|</span>
+                <?php
+                }
+                ?>
             </div>
 
             <div class="search-container">

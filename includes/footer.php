@@ -14,7 +14,7 @@
     <div>
         <h3>THÔNG TIN LIÊN HỆ</h3>
         <p>
-            Email: support@vettins.vn<br />Hotline: 0397789902<br />Địa chỉ: 180 CAO LỖ PHƯỜNG 4 QUẬN 8 TP. Hồ
+            Email: dh52200360@student.stu.edu.vn<br />Hotline: 0397789902<br />Địa chỉ: 180 CAO LỖ PHƯỜNG 4 QUẬN 8 TP. Hồ
             Chí Minh
         </p>
     </div>
