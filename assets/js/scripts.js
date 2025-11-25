@@ -54,23 +54,42 @@ function loadMore() {
 
 
 // 1. Hàm mở Modal
-function openModal(id, name, price, image) {
-  // Điền dữ liệu vào Modal
+function openModal(id, name, price, image, stock) {
+  // 1. Điền thông tin cơ bản
   document.getElementById('modalId').value = id;
   document.getElementById('modalImg').src = image;
   document.getElementById('modalName').innerText = name;
 
-  // Format giá tiền cho đẹp (Ví dụ: 500000 -> 500.000₫)
   let formattedPrice = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
   document.getElementById('modalPrice').innerText = formattedPrice;
-
-  // Cập nhật link "Xem chi tiết"
   document.getElementById('modalLink').href = 'chitiet.php?id=' + id;
-
-  // Reset số lượng về 1
   document.getElementById('modalQty').value = 1;
 
-  // Bỏ class hidden để hiện Modal
+  // 2. XỬ LÝ LOGIC TỒN KHO (Mới thêm)
+  const stockLabel = document.getElementById('modalStockLabel');
+  const buyForm = document.getElementById('modalBuyForm'); // Form mua hàng
+  const outOfStockMsg = document.getElementById('modalOutOfStockMsg'); // Thông báo hết hàng
+
+  if (stock > 0) {
+    // CÒN HÀNG:
+    // Hiện chữ "Còn hàng" màu xanh
+    stockLabel.innerHTML = `<span class="text-sm text-green-600 bg-green-100 px-2 py-1 rounded">Còn ${stock} sản phẩm</span>`;
+    // Hiện Form mua, Ẩn thông báo hết hàng
+    buyForm.classList.remove('hidden');
+    outOfStockMsg.classList.add('hidden');
+
+    // Cập nhật số lượng max trong input
+    document.getElementById('modalQty').setAttribute('max', stock);
+  } else {
+    // HẾT HÀNG:
+    // Hiện chữ "Hết hàng" màu đỏ
+    stockLabel.innerHTML = `<span class="text-sm text-red-600 bg-red-100 px-2 py-1 rounded">HẾT HÀNG</span>`;
+    // Ẩn Form mua, Hiện thông báo hết hàng
+    buyForm.classList.add('hidden');
+    outOfStockMsg.classList.remove('hidden');
+  }
+
+  // 3. Hiện Modal
   document.getElementById('quickViewModal').classList.remove('hidden');
 }
 

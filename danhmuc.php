@@ -51,7 +51,13 @@ include './includes/header.php';
                             <div class="absolute bottom-0 left-0 right-0 p-4 translate-y-full group-hover:translate-y-0 transition duration-300 bg-white/95 backdrop-blur border-t">
                                 <div class="flex gap-2">
                                     <button type="button"
-                                        onclick="event.stopPropagation(); openModal(<?php echo $product['sanpham_id']; ?>, '<?php echo addslashes($product['ten']); ?>', <?php echo $product['gia']; ?>, '<?php echo $product['hinhAnh']; ?>')"
+                                        onclick="event.stopPropagation(); openModal(
+    <?php echo $product['sanpham_id']; ?>, 
+    '<?php echo addslashes($product['ten']); ?>', 
+    <?php echo $product['gia']; ?>, 
+    '<?php echo $product['hinhAnh']; ?>',
+    <?php echo $product['soLuongTon']; ?>  // <--- THÊM CÁI NÀY
+)"
                                         class="flex-1 bg-black text-white py-2 font-bold hover:bg-red-600 transition text-xs uppercase">
                                         Thêm giỏ
                                     </button>
@@ -94,11 +100,13 @@ include './includes/header.php';
                 <h2 id="modalName" class="text-2xl font-bold mb-2 uppercase"></h2>
                 <div class="flex items-center gap-4 mb-4">
                     <span id="modalPrice" class="text-3xl text-red-600 font-bold"></span>
-                    <span class="text-sm text-green-600 bg-green-100 px-2 py-1 rounded">Còn hàng</span>
+                    <span id="modalStockLabel"></span>
                 </div>
                 <hr class="border-gray-200 my-4">
-                <form action="them-gio-hang.php" method="POST">
+
+                <form id="modalBuyForm" action="them-gio-hang.php" method="POST">
                     <input type="hidden" name="sanpham_id" id="modalId">
+
                     <div class="mb-6">
                         <label class="block font-bold mb-2 text-sm">Kích thước:</label>
                         <div class="flex gap-3">
@@ -116,6 +124,7 @@ include './includes/header.php';
                             </label>
                         </div>
                     </div>
+
                     <div class="mb-6">
                         <label class="block font-bold mb-2 text-sm">Số lượng:</label>
                         <div class="flex items-center">
@@ -124,9 +133,18 @@ include './includes/header.php';
                             <button type="button" onclick="updateQty(1)" class="w-8 h-8 bg-gray-200 hover:bg-gray-300 rounded-r font-bold">+</button>
                         </div>
                     </div>
-                    <button type="submit" name="add_to_cart" class="w-full bg-red-600 text-white font-bold py-3 rounded hover:bg-red-700 transition uppercase">THÊM VÀO GIỎ NGAY</button>
+
+                    <button type="submit" name="add_to_cart" class="w-full bg-red-600 text-white font-bold py-3 rounded hover:bg-red-700 transition uppercase">
+                        THÊM VÀO GIỎ NGAY
+                    </button>
                 </form>
+
+                <div id="modalOutOfStockMsg" class="hidden bg-gray-100 p-4 rounded text-center border border-gray-200">
+                    <p class="text-red-500 font-bold mb-1">❌ Sản phẩm tạm thời hết hàng</p>
+                    <p class="text-xs text-gray-500">Vui lòng quay lại sau hoặc xem sản phẩm khác.</p>
+                </div>
             </div>
+
             <div class="mt-6 pt-4 border-t border-gray-100 text-sm flex justify-end">
                 <a id="modalLink" href="#" class="text-gray-500 hover:text-black hover:underline flex items-center gap-1 group">
                     Xem chi tiết sản phẩm <span class="group-hover:translate-x-1 transition-transform">»</span>

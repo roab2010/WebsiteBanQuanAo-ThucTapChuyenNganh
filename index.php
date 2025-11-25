@@ -72,7 +72,13 @@ include './includes/header.php';
 
             <div class="mt-4 flex gap-2">
               <button type="button"
-                onclick="event.stopPropagation(); openModal(<?php echo $product['sanpham_id']; ?>, '<?php echo addslashes($product['ten']); ?>', <?php echo $product['gia']; ?>, '<?php echo $product['hinhAnh']; ?>')"
+                onclick="event.stopPropagation(); openModal(
+                    <?php echo $product['sanpham_id']; ?>, 
+                    '<?php echo addslashes($product['ten']); ?>', 
+                    <?php echo $product['gia']; ?>, 
+                    '<?php echo $product['hinhAnh']; ?>',
+                    <?php echo $product['soLuongTon']; ?>  // <--- THÊM CÁI NÀY
+                  )"
                 class="bg-black text-white px-4 py-2 rounded hover:bg-gray-800 flex-1 text-sm font-bold uppercase">
                 THÊM GIỎ
               </button>
@@ -189,12 +195,13 @@ include './includes/header.php';
         <h2 id="modalName" class="text-2xl font-bold mb-2 uppercase"></h2>
         <div class="flex items-center gap-4 mb-4">
           <span id="modalPrice" class="text-3xl text-red-600 font-bold"></span>
-          <span class="text-sm text-green-600 bg-green-100 px-2 py-1 rounded">Còn hàng</span>
+          <span id="modalStockLabel"></span>
         </div>
         <hr class="border-gray-200 my-4">
 
-        <form action="them-gio-hang.php" method="POST">
+        <form id="modalBuyForm" action="them-gio-hang.php" method="POST">
           <input type="hidden" name="sanpham_id" id="modalId">
+
           <div class="mb-6">
             <label class="block font-bold mb-2 text-sm">Kích thước:</label>
             <div class="flex gap-3">
@@ -212,6 +219,7 @@ include './includes/header.php';
               </label>
             </div>
           </div>
+
           <div class="mb-6">
             <label class="block font-bold mb-2 text-sm">Số lượng:</label>
             <div class="flex items-center">
@@ -220,8 +228,16 @@ include './includes/header.php';
               <button type="button" onclick="updateQty(1)" class="w-8 h-8 bg-gray-200 hover:bg-gray-300 rounded-r font-bold">+</button>
             </div>
           </div>
-          <button type="submit" name="add_to_cart" class="w-full bg-red-600 text-white font-bold py-3 rounded hover:bg-red-700 transition uppercase">THÊM VÀO GIỎ NGAY</button>
+
+          <button type="submit" name="add_to_cart" class="w-full bg-red-600 text-white font-bold py-3 rounded hover:bg-red-700 transition uppercase">
+            THÊM VÀO GIỎ NGAY
+          </button>
         </form>
+
+        <div id="modalOutOfStockMsg" class="hidden bg-gray-100 p-4 rounded text-center border border-gray-200">
+          <p class="text-red-500 font-bold mb-1">❌ Sản phẩm tạm thời hết hàng</p>
+          <p class="text-xs text-gray-500">Vui lòng quay lại sau hoặc xem sản phẩm khác.</p>
+        </div>
       </div>
 
       <div class="mt-6 pt-4 border-t border-gray-100 text-sm flex justify-end">
