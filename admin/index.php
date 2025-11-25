@@ -2,16 +2,31 @@
 session_start();
 include '../config/database.php';
 
-// BẮT BUỘC: Kiểm tra xem có phải Admin không?
+// BẮT BUỘC: Kiểm tra quyền Admin
 if (!isset($_SESSION['admin_id'])) {
     header("Location: login.php");
     exit();
 }
 
-// Thống kê sơ bộ (Ví dụ)
+// 1. THỐNG KÊ SỐ LIỆU
+// Tổng sản phẩm
 $total_products = mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) as c FROM SAN_PHAM"))['c'];
+
+// Tổng đơn hàng
 $total_orders = mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) as c FROM DON_HANG"))['c'];
+
+// Đơn hàng mới (Chờ xử lý)
 $new_orders = mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) as c FROM DON_HANG WHERE trangThaiDH = 'Cho xu ly'"))['c'];
+
+// Tổng khách hàng
+$total_users = mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) as c FROM NGUOI_DUNG"))['c'];
+
+// TỔNG DOANH THU (Chỉ tính những đơn đã 'Hoàn tất' hoặc đã 'Thanh toán')
+// Logic: Lấy tổng tiền của các đơn có trạng thái 'Hoan tat'
+$revenue_query = mysqli_query($conn, "SELECT SUM(tongTien) as total FROM DON_HANG WHERE trangThaiDH = 'Hoan tat'");
+$revenue_data = mysqli_fetch_assoc($revenue_query);
+$total_revenue = $revenue_data['total'] ?? 0;
+
 ?>
 
 <!DOCTYPE html>
@@ -19,59 +34,157 @@ $new_orders = mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) as c FROM 
 
 <head>
     <meta charset="UTF-8">
-    <title>Dashboard - Admin</title>
+    <title>Dashboard - Admin Quản Trị</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <link rel="icon" type="image/png" sizes="32x32" href="assets/img/logoicon.png">
 </head>
 
 <body class="bg-gray-100 font-sans antialiased">
 
     <div class="flex h-screen">
+
         <?php include 'includes/sidebar.php'; ?>
 
         <main class="flex-1 p-8 overflow-y-auto">
-            <h2 class="text-3xl font-bold mb-8">Tổng quan</h2>
+            <div class="flex justify-between items-center mb-8">
+                <div>
+                    <h2 class="text-3xl font-bold text-gray-800">Tổng quan</h2>
+                    <p class="text-gray-500 mt-1">Chào mừng, <strong><?php echo $_SESSION['admin_name']; ?></strong>!</p>
+                </div>
+                <div class="text-sm text-gray-500">
+                    Hôm nay: <?php echo date('d/m/Y'); ?>
+                </div>
+            </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                <div class="bg-white p-6 rounded-lg shadow flex items-center border-l-4 border-blue-500">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+
+                <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-yellow-500 flex items-center">
+                    <div class="p-4 bg-yellow-100 rounded-full mr-4 text-yellow-600">
+                        <i class="fas fa-coins text-2xl"></i>
+                    </div>
+                    <div>
+                        <p class="text-gray-500 text-xs uppercase font-bold">Doanh thu</p>
+                        <p class="text-2xl font-bold text-gray-800"><?php echo number_format($total_revenue, 0, ',', '.'); ?>₫</p>
+                    </div>
+                </div>
+
+                <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-red-500 flex items-center relative overflow-hidden">
+                    <div class="p-4 bg-red-100 rounded-full mr-4 text-red-600 z-10">
+                        <i class="fas fa-bell text-2xl <?php echo $new_orders > 0 ? 'animate-swing' : ''; ?>"></i>
+                    </div>
+                    <div class="z-10">
+                        <p class="text-gray-500 text-xs uppercase font-bold">Đơn chờ xử lý</p>
+                        <p class="text-2xl font-bold text-red-600"><?php echo $new_orders; ?></p>
+                    </div>
+                    <?php if ($new_orders > 0): ?>
+                        <div class="absolute right-0 top-0 bottom-0 w-2 bg-red-500 animate-pulse"></div>
+                    <?php endif; ?>
+                </div>
+
+                <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-blue-500 flex items-center">
                     <div class="p-4 bg-blue-100 rounded-full mr-4 text-blue-600">
                         <i class="fas fa-tshirt text-2xl"></i>
                     </div>
                     <div>
-                        <p class="text-gray-500 text-sm">Tổng sản phẩm</p>
-                        <p class="text-2xl font-bold"><?php echo $total_products; ?></p>
+                        <p class="text-gray-500 text-xs uppercase font-bold">Sản phẩm</p>
+                        <p class="text-2xl font-bold text-gray-800"><?php echo $total_products; ?></p>
                     </div>
                 </div>
 
-                <div class="bg-white p-6 rounded-lg shadow flex items-center border-l-4 border-green-500">
-                    <div class="p-4 bg-green-100 rounded-full mr-4 text-green-600">
-                        <i class="fas fa-shopping-bag text-2xl"></i>
+                <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-purple-500 flex items-center">
+                    <div class="p-4 bg-purple-100 rounded-full mr-4 text-purple-600">
+                        <i class="fas fa-users text-2xl"></i>
                     </div>
                     <div>
-                        <p class="text-gray-500 text-sm">Tổng đơn hàng</p>
-                        <p class="text-2xl font-bold"><?php echo $total_orders; ?></p>
-                    </div>
-                </div>
-
-                <div class="bg-white p-6 rounded-lg shadow flex items-center border-l-4 border-red-500">
-                    <div class="p-4 bg-red-100 rounded-full mr-4 text-red-600">
-                        <i class="fas fa-bell text-2xl animate-pulse"></i>
-                    </div>
-                    <div>
-                        <p class="text-gray-500 text-sm">Đơn chờ xử lý</p>
-                        <p class="text-2xl font-bold text-red-600"><?php echo $new_orders; ?></p>
+                        <p class="text-gray-500 text-xs uppercase font-bold">Khách hàng</p>
+                        <p class="text-2xl font-bold text-gray-800"><?php echo $total_users; ?></p>
                     </div>
                 </div>
             </div>
 
-            <div class="bg-white p-6 rounded-lg shadow">
-                <h3 class="font-bold text-lg mb-4">Chào mừng Admin trở lại!</h3>
-                <p class="text-gray-600">Chọn các mục bên trái để bắt đầu quản lý cửa hàng của bạn.</p>
+            <div class="bg-white shadow-lg rounded-xl p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="font-bold text-lg text-gray-800">Đơn hàng vừa đặt</h3>
+                    <a href="donhang.php" class="text-blue-600 text-sm hover:underline">Xem tất cả →</a>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="text-xs uppercase text-gray-500 border-b">
+                                <th class="py-3">Mã đơn</th>
+                                <th class="py-3">Khách hàng</th>
+                                <th class="py-3">Tổng tiền</th>
+                                <th class="py-3">Trạng thái</th>
+                                <th class="py-3 text-right">Ngày đặt</th>
+                            </tr>
+                        </thead>
+                        <tbody class="text-sm">
+                            <?php
+                            // Lấy 5 đơn hàng mới nhất
+                            $sql_recent = "SELECT * FROM DON_HANG ORDER BY donhang_id DESC LIMIT 5";
+                            $rs_recent = mysqli_query($conn, $sql_recent);
+
+                            if (mysqli_num_rows($rs_recent) > 0) {
+                                while ($row = mysqli_fetch_assoc($rs_recent)):
+                                    $status_class = ($row['trangThaiDH'] == 'Cho xu ly') ? 'text-yellow-600 bg-yellow-100' : 'text-gray-600 bg-gray-100';
+                            ?>
+                                    <tr class="border-b last:border-0 hover:bg-gray-50 transition">
+                                        <td class="py-3 font-bold">#<?php echo $row['donhang_id']; ?></td>
+                                        <td class="py-3"><?php echo htmlspecialchars($row['hoTenNguoiNhan']); ?></td>
+                                        <td class="py-3 font-bold text-gray-800"><?php echo number_format($row['tongTien'], 0, ',', '.'); ?>₫</td>
+                                        <td class="py-3">
+                                            <span class="px-2 py-1 rounded text-xs font-bold <?php echo $status_class; ?>">
+                                                <?php echo $row['trangThaiDH']; ?>
+                                            </span>
+                                        </td>
+                                        <td class="py-3 text-right text-gray-500"><?php echo date('d/m H:i', strtotime($row['ngayTao'])); ?></td>
+                                    </tr>
+                            <?php
+                                endwhile;
+                            } else {
+                                echo '<tr><td colspan="5" class="py-4 text-center text-gray-500">Chưa có đơn hàng nào.</td></tr>';
+                            }
+                            ?>
+                        </tbody>
+                    </table>
+                </div>
             </div>
+
         </main>
     </div>
 
+    <style>
+        @keyframes swing {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            20% {
+                transform: rotate(15deg);
+            }
+
+            40% {
+                transform: rotate(-10deg);
+            }
+
+            60% {
+                transform: rotate(5deg);
+            }
+
+            80% {
+                transform: rotate(-5deg);
+            }
+
+            100% {
+                transform: rotate(0deg);
+            }
+        }
+
+        .animate-swing {
+            animation: swing 1s infinite ease-in-out;
+        }
+    </style>
 </body>
 
 </html>

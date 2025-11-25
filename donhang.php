@@ -25,12 +25,25 @@ include './includes/header.php';
             <?php while ($order = mysqli_fetch_assoc($result_orders)):
                 $donhang_id = $order['donhang_id'];
 
-                // Xử lý màu sắc trạng thái
+                // 1. Xử lý màu sắc trạng thái ĐƠN HÀNG
                 $status_color = 'bg-gray-100 text-gray-800'; // Mặc định (Chờ xử lý)
-                if (strpos($order['trangThaiTT'], 'Da thanh toan') !== false) {
-                    $status_color = 'bg-green-100 text-green-800';
-                } elseif ($order['trangThaiDH'] == 'Huy') {
-                    $status_color = 'bg-red-100 text-red-800';
+                if ($order['trangThaiDH'] == 'Dang giao') $status_color = 'bg-blue-100 text-blue-800';
+                if ($order['trangThaiDH'] == 'Hoan tat') $status_color = 'bg-green-100 text-green-800';
+                if ($order['trangThaiDH'] == 'Huy') $status_color = 'bg-red-100 text-red-800';
+
+                // 2. Xử lý trạng thái THANH TOÁN (Logic mới)
+                $is_paid = false;
+                $tt_tt = trim($order['trangThaiTT']);
+                $pt_tt = trim($order['phuongThucTT']);
+                $tt_dh = trim($order['trangThaiDH']);
+
+                // Nếu database ghi đã thanh toán (MoMo)
+                if (stripos($tt_tt, 'Da thanh toan') !== false) {
+                    $is_paid = true;
+                }
+                // HOẶC: Nếu là COD mà đơn đã HOÀN TẤT
+                if ($pt_tt == 'COD' && $tt_dh == 'Hoan tat') {
+                    $is_paid = true;
                 }
             ?>
                 <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
@@ -43,18 +56,25 @@ include './includes/header.php';
                             </span>
                         </div>
                         <div class="flex gap-2">
-                            <span class="px-3 py-1 rounded-full text-xs font-bold uppercase bg-blue-100 text-blue-800">
+                            <span class="px-3 py-1 rounded-full text-xs font-bold uppercase <?php echo $status_color; ?>">
                                 <?php echo $order['trangThaiDH']; ?>
                             </span>
-                            <span class="px-3 py-1 rounded-full text-xs font-bold uppercase <?php echo $status_color; ?>">
-                                <?php echo $order['trangThaiTT']; ?>
-                            </span>
+
+                            <?php if ($is_paid): ?>
+                                <span class="px-3 py-1 rounded-full text-xs font-bold uppercase bg-green-100 text-green-800 border border-green-200">
+                                    ĐÃ THANH TOÁN
+                                </span>
+                            <?php else: ?>
+                                <span class="px-3 py-1 rounded-full text-xs font-bold uppercase bg-gray-100 text-gray-500 border border-gray-200">
+                                    CHƯA THANH TOÁN
+                                </span>
+                            <?php endif; ?>
                         </div>
                     </div>
 
                     <div class="p-4">
                         <?php
-                        // Lấy chi tiết sản phẩm của đơn này
+                        // Lấy chi tiết sản phẩm
                         $sql_items = "SELECT ct.*, sp.ten, sp.hinhAnh 
                                       FROM CHI_TIET_DON_HANG ct 
                                       JOIN SAN_PHAM sp ON ct.sanpham_id = sp.sanpham_id 
@@ -82,7 +102,7 @@ include './includes/header.php';
 
                     <div class="p-4 bg-gray-50 border-t border-gray-200 flex justify-between items-center">
                         <div class="text-sm text-gray-500">
-                            Thanh toán: <strong><?php echo $order['phuongThucTT']; ?></strong>
+                            Phương thức: <strong><?php echo $order['phuongThucTT']; ?></strong>
                         </div>
                         <div class="text-xl font-bold text-red-600">
                             Tổng tiền: <?php echo number_format($order['tongTien'], 0, ',', '.'); ?>₫
