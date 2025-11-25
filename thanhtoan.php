@@ -53,15 +53,22 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['btn_dat_hang'])) {
     if (mysqli_query($conn, $sql_order)) {
         $donhang_id = mysqli_insert_id($conn);
 
-        // 2. Lưu chi tiết đơn hàng
+       
+        // 2. Chuyển sản phẩm từ GIỎ HÀNG sang CHI TIẾT ĐƠN HÀNG & TRỪ KHO
         foreach ($cart_items as $item) {
             $sp_id = $item['sanpham_id'];
             $sl = $item['soLuong'];
             $size = $item['size'];
             $gia = $item['gia'];
+
+            // a. Lưu vào chi tiết đơn hàng
             $sql_detail = "INSERT INTO CHI_TIET_DON_HANG (donhang_id, sanpham_id, soLuong, size, donGia) 
                            VALUES ($donhang_id, $sp_id, $sl, '$size', $gia)";
             mysqli_query($conn, $sql_detail);
+
+            // b. TRỪ SỐ LƯỢNG TỒN KHO (Logic mới thêm)
+            $sql_update_stock = "UPDATE SAN_PHAM SET soLuongTon = soLuongTon - $sl WHERE sanpham_id = $sp_id";
+            mysqli_query($conn, $sql_update_stock);
         }
 
         // 3. Xóa giỏ hàng

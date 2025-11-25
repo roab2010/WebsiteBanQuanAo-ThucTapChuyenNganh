@@ -43,59 +43,91 @@ include './includes/header.php';
 
         <div class="w-full md:w-1/2">
             <h1 class="text-3xl font-bold mb-4"><?php echo htmlspecialchars($product['ten']); ?></h1>
+
             <div class="flex items-center gap-4 mb-6">
                 <p class="text-3xl text-red-600 font-bold"><?php echo number_format($product['gia'], 0, ',', '.'); ?>₫</p>
-                <span class="bg-green-100 text-green-800 text-sm font-medium px-2.5 py-0.5 rounded">Còn hàng</span>
+
+                <?php if ($product['soLuongTon'] > 0): ?>
+                    <span class="bg-green-100 text-green-800 text-sm font-medium px-2.5 py-0.5 rounded">
+                        Còn <?php echo $product['soLuongTon']; ?> sản phẩm
+                    </span>
+                <?php else: ?>
+                    <span class="bg-red-100 text-red-800 text-sm font-bold px-3 py-1 rounded">
+                        HẾT HÀNG
+                    </span>
+                <?php endif; ?>
             </div>
 
             <p class="text-gray-600 mb-8 leading-relaxed text-lg border-b pb-6">
                 <?php echo htmlspecialchars($product['moTa'] ?? 'Chưa có mô tả chi tiết cho sản phẩm này.'); ?>
             </p>
 
-            <form action="them-gio-hang.php" method="POST">
-                <input type="hidden" name="sanpham_id" value="<?php echo $product['sanpham_id']; ?>">
+            <?php if ($product['soLuongTon'] > 0): ?>
+                <form action="them-gio-hang.php" method="POST">
+                    <input type="hidden" name="sanpham_id" value="<?php echo $product['sanpham_id']; ?>">
 
-                <div class="mb-6">
-                    <label class="block font-bold mb-3 text-lg">Chọn Kích thước:</label>
+                    <div class="mb-6">
+                        <label class="block font-bold mb-3 text-lg">Chọn Kích thước:</label>
+                        <div class="flex gap-4">
+                            <?php $sizes = ['S', 'M', 'L', 'XL']; ?>
+                            <?php foreach ($sizes as $size): ?>
+                                <label class="cursor-pointer">
+                                    <input type="radio" name="size" value="<?php echo $size; ?>" class="peer sr-only" required>
+                                    <div class="w-14 h-14 flex items-center justify-center border-2 border-gray-300 rounded-md hover:border-black peer-checked:bg-black peer-checked:text-white peer-checked:border-black transition font-bold">
+                                        <?php echo $size; ?>
+                                    </div>
+                                </label>
+                            <?php endforeach; ?>
+                        </div>
+                    </div>
+
+                    <div class="mb-8">
+                        <label class="block font-bold mb-3 text-lg">Số lượng:</label>
+                        <div class="flex items-center">
+                            <button type="button" onclick="this.nextElementSibling.stepDown()" class="w-10 h-10 bg-gray-100 hover:bg-gray-200 border border-gray-300 rounded-l text-xl font-bold">-</button>
+
+                            <input type="number" name="soLuong" value="1" min="1" max="<?php echo $product['soLuongTon']; ?>"
+                                class="w-16 h-10 border-t border-b border-gray-300 text-center focus:outline-none bg-white font-bold" readonly>
+
+                            <button type="button" onclick="this.previousElementSibling.stepUp()" class="w-10 h-10 bg-gray-100 hover:bg-gray-200 border border-gray-300 rounded-r text-xl font-bold">+</button>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-2">Tối đa <?php echo $product['soLuongTon']; ?> sản phẩm</p>
+                    </div>
+
                     <div class="flex gap-4">
-                        <?php $sizes = ['S', 'M', 'L', 'XL']; ?>
-                        <?php foreach ($sizes as $size): ?>
-                            <label class="cursor-pointer">
-                                <input type="radio" name="size" value="<?php echo $size; ?>" class="peer sr-only" required>
-                                <div class="w-14 h-14 flex items-center justify-center border-2 border-gray-300 rounded-md hover:border-black peer-checked:bg-black peer-checked:text-white peer-checked:border-black transition font-bold">
-                                    <?php echo $size; ?>
-                                </div>
-                            </label>
-                        <?php endforeach; ?>
+                        <button type="submit" name="add_to_cart" class="flex-1 bg-red-600 text-white py-4 font-bold rounded hover:bg-red-700 transition uppercase text-lg shadow-md">
+                            THÊM VÀO GIỎ NGAY
+                        </button>
+
+                        <button type="button"
+                            onclick="addToWishlist(<?php echo $product['sanpham_id']; ?>, '<?php echo addslashes($product['ten']); ?>')"
+                            class="border-2 border-gray-300 w-16 flex items-center justify-center rounded hover:bg-red-50 hover:text-red-500 hover:border-red-500 transition text-2xl"
+                            title="Thêm vào yêu thích">
+                            ❤️
+                        </button>
+                    </div>
+                </form>
+
+            <?php else: ?>
+                <div class="bg-gray-100 p-6 rounded-lg text-center border border-gray-300">
+                    <p class="text-xl font-bold text-gray-500 mb-2">❌ Sản phẩm tạm thời hết hàng</p>
+                    <p class="text-sm text-gray-400">Vui lòng quay lại sau hoặc chọn sản phẩm khác.</p>
+
+                    <div class="mt-4">
+                        <button type="button"
+                            onclick="addToWishlist(<?php echo $product['sanpham_id']; ?>, '<?php echo addslashes($product['ten']); ?>')"
+                            class="text-blue-600 hover:underline font-bold">
+                            ❤️ Lưu vào yêu thích để theo dõi
+                        </button>
                     </div>
                 </div>
-
-                <div class="mb-8">
-                    <label class="block font-bold mb-3 text-lg">Số lượng:</label>
-                    <div class="flex items-center">
-                        <button type="button" onclick="this.nextElementSibling.stepDown()" class="w-10 h-10 bg-gray-100 hover:bg-gray-200 border border-gray-300 rounded-l text-xl font-bold">-</button>
-                        <input type="number" name="soLuong" value="1" min="1" max="10" class="w-16 h-10 border-t border-b border-gray-300 text-center focus:outline-none bg-white font-bold" readonly>
-                        <button type="button" onclick="this.previousElementSibling.stepUp()" class="w-10 h-10 bg-gray-100 hover:bg-gray-200 border border-gray-300 rounded-r text-xl font-bold">+</button>
-                    </div>
-                </div>
-
-                <div class="flex gap-4">
-                    <button type="submit" name="add_to_cart" class="flex-1 bg-red-600 text-white py-4 font-bold rounded hover:bg-red-700 transition uppercase text-lg shadow-md">
-                        THÊM VÀO GIỎ NGAY
-                    </button>
-                    <button type="button"
-                        onclick="addToWishlist(<?php echo $product['sanpham_id']; ?>, '<?php echo addslashes($product['ten']); ?>')"
-                        class="border-2 border-gray-300 w-16 flex items-center justify-center rounded hover:bg-red-50 hover:text-red-500 hover:border-red-500 transition text-2xl"
-                        title="Thêm vào yêu thích">
-                        ❤️
-                    </button>
-                </div>
-            </form>
+            <?php endif; ?>
 
             <div class="mt-10 bg-gray-50 p-6 rounded-lg space-y-3 text-sm text-gray-700">
                 <p>✅ Cam kết chính hãng 100%</p>
                 <p>✅ Miễn phí vận chuyển cho đơn hàng trên 500k</p>
-                <p>✅ Đổi trả trong vòng 7 ngày</p>
+                <p>✅ Hỗ trợ đổi trả trong vòng 7 ngày</p>
+                <p>✅ Hotline hỗ trợ: 1900 xxxx</p>
             </div>
         </div>
     </div>
