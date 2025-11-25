@@ -35,12 +35,12 @@ if (isset($_SESSION['user_id'])) {
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>3 chàng lính ngự lâm - Trang Chủ</title>
+    <title>BAOCUNBAO </title>
 
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
     <script src="https://cdn.tailwindcss.com"></script>
-
+    <link rel="icon" type="image/png" sizes="32x32" href="assets/img/logoicon.png">
     <link rel="stylesheet" href="assets/css/styles.css" />
 </head>
 

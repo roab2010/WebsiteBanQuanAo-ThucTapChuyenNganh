@@ -64,6 +64,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <meta charset="UTF-8">
     <title><?php echo $is_edit ? 'Sửa danh mục' : 'Thêm danh mục'; ?></title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="icon" type="image/png" sizes="32x32" href="assets/img/logoicon.png">
 </head>
 
 <body class="bg-gray-100">

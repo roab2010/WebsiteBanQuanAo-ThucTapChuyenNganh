@@ -22,6 +22,7 @@ $new_orders = mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) as c FROM 
     <title>Dashboard - Admin</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="icon" type="image/png" sizes="32x32" href="assets/img/logoicon.png">
 </head>
 
 <body class="bg-gray-100 font-sans antialiased">

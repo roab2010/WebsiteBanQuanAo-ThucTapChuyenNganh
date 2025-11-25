@@ -39,7 +39,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 <head>
     <meta charset="UTF-8">
     <title>Đăng nhập Admin</title>
+    <link rel="icon" type="image/png" sizes="32x32" href="assets/img/logoicon.png">
     <script src="https://cdn.tailwindcss.com"></script>
+
 </head>
 
 <body class="bg-gray-900 h-screen flex items-center justify-center">
