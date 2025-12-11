@@ -14,21 +14,27 @@ require_once __DIR__ . '/../config/database.php';
 // 3. ĐỊNH NGHĨA BIẾN CHUNG
 $user = $_SESSION['user'] ?? null;
 $search_query = $search_query ?? ''; // Tránh lỗi undefined ở trang chi tiết
+
+// Xử lý đường dẫn Logo (Giữ nguyên logic của bạn)
 $logo_path = 'assets/img/logonho.png';
 if (!file_exists($logo_path) && file_exists('../' . $logo_path)) {
     $logo_path = '../' . $logo_path;
 }
-// 4. ĐẾM SỐ LƯỢNG GIỎ HÀNG
+
+// 4. ĐẾM SỐ LƯỢNG GIỎ HÀNG (SỬA LẠI THEO PDO)
 $cart_count = 0;
 if (isset($_SESSION['user_id'])) {
     $user_id = $_SESSION['user_id'];
-    $sql_count = "SELECT SUM(soLuong) as total FROM GIO_HANG WHERE nguoi_id = $user_id";
-    $result_count = mysqli_query($conn, $sql_count);
 
-    if ($result_count) {
-        $row_count = mysqli_fetch_assoc($result_count);
-        $cart_count = $row_count['total'] ?? 0;
-    }
+    // Dùng PDO Prepared Statement
+    $sql_count = "SELECT SUM(soLuong) as total FROM GIO_HANG WHERE nguoi_id = ?";
+    $stmt_count = $conn->prepare($sql_count);
+    $stmt_count->execute([$user_id]);
+
+    $row_count = $stmt_count->fetch(PDO::FETCH_ASSOC);
+
+    // Nếu có kết quả thì lấy, không thì bằng 0
+    $cart_count = $row_count['total'] ?? 0;
 }
 ?>
 
@@ -59,12 +65,14 @@ if (isset($_SESSION['user_id'])) {
                 <span class="separator">|</span>
 
                 <?php
-                // Lấy danh mục từ DB để in ra Menu
+                // Lấy danh mục từ DB để in ra Menu (SỬA LẠI THEO PDO)
                 $sql_menu = "SELECT * FROM DANH_MUC ORDER BY danhmuc_id ASC";
-                $result_menu = mysqli_query($conn, $sql_menu);
 
-                // Dùng vòng lặp in ra từng mục
-                while ($menu = mysqli_fetch_assoc($result_menu)) {
+                // Dùng query() vì không có tham số
+                $stmt_menu = $conn->query($sql_menu);
+
+                // Dùng vòng lặp fetch PDO
+                while ($menu = $stmt_menu->fetch(PDO::FETCH_ASSOC)) {
                 ?>
                     <a href="danhmuc.php?id=<?php echo $menu['danhmuc_id']; ?>" class="nav-link font-bold text-gray-800 hover:text-red-600 transition uppercase text-sm">
                         <?php echo htmlspecialchars($menu['ten']); ?>
@@ -162,6 +170,7 @@ if (isset($_SESSION['user_id'])) {
                 <?php endif; ?>
 
             </div>
+        </div>
     </header>
 
     <div id="toast-container"></div>
@@ -218,3 +227,5 @@ if (isset($_SESSION['user_id'])) {
         }
     </script>
 </body>
+
+</html>

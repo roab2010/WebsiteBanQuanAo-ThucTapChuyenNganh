@@ -9,34 +9,45 @@ if (!isset($_SESSION['admin_id'])) {
 
 $id = isset($_GET['id']) ? intval($_GET['id']) : 0;
 
-// --- 1. XỬ LÝ CẬP NHẬT TRẠNG THÁI (Code mới dùng Session Alert) ---
+// --- 1. XỬ LÝ CẬP NHẬT TRẠNG THÁI (PDO) ---
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $status = $_POST['trangThaiDH'];
-    $sql_update = "UPDATE DON_HANG SET trangThaiDH = '$status' WHERE donhang_id = $id";
 
-    if (mysqli_query($conn, $sql_update)) {
-        // Gán thông báo thành công
-        $_SESSION['alert'] = ['type' => 'success', 'message' => 'Cập nhật trạng thái đơn hàng thành công!'];
-    } else {
-        // Gán thông báo lỗi
-        $_SESSION['alert'] = ['type' => 'error', 'message' => 'Lỗi hệ thống: ' . mysqli_error($conn)];
+    try {
+        $sql_update = "UPDATE DON_HANG SET trangThaiDH = ? WHERE donhang_id = ?";
+        $stmt_update = $conn->prepare($sql_update);
+
+        if ($stmt_update->execute([$status, $id])) {
+            $_SESSION['alert'] = ['type' => 'success', 'message' => 'Cập nhật trạng thái đơn hàng thành công!'];
+        } else {
+            $_SESSION['alert'] = ['type' => 'error', 'message' => 'Lỗi cập nhật.'];
+        }
+    } catch (PDOException $e) {
+        $_SESSION['alert'] = ['type' => 'error', 'message' => 'Lỗi hệ thống: ' . $e->getMessage()];
     }
 
-    // Reload lại trang để hiện thông báo
-    header("Location: donhang.php?id=$id");
+    // Chuyển hướng về trang danh sách
+    header("Location: donhang.php");
     exit();
 }
 
-// Lấy thông tin đơn hàng
-$sql = "SELECT * FROM DON_HANG WHERE donhang_id = $id";
-$order = mysqli_fetch_assoc(mysqli_query($conn, $sql));
+// Lấy thông tin đơn hàng (PDO)
+$stmt_order = $conn->prepare("SELECT * FROM DON_HANG WHERE donhang_id = ?");
+$stmt_order->execute([$id]);
+$order = $stmt_order->fetch(PDO::FETCH_ASSOC);
 
-// Lấy chi tiết sản phẩm
+if (!$order) {
+    echo "Đơn hàng không tồn tại!";
+    exit();
+}
+
+// Lấy chi tiết sản phẩm (PDO)
 $sql_items = "SELECT ct.*, sp.ten, sp.hinhAnh 
               FROM CHI_TIET_DON_HANG ct 
               JOIN SAN_PHAM sp ON ct.sanpham_id = sp.sanpham_id 
-              WHERE ct.donhang_id = $id";
-$items = mysqli_query($conn, $sql_items);
+              WHERE ct.donhang_id = ?";
+$stmt_items = $conn->prepare($sql_items);
+$stmt_items->execute([$id]);
 
 // Logic kiểm tra thanh toán
 $pt_tt = trim($order['phuongThucTT']);
@@ -54,9 +65,7 @@ if ($pt_tt == 'COD' && $tt_dh == 'Hoan tat') $is_paid = true;
     <meta charset="UTF-8">
     <title>Chi tiết đơn hàng #<?php echo $id; ?></title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="icon" type="image/png" sizes="32x32" href="assets/img/logoicon.png">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-
     <style>
         #toast-container {
             position: fixed;
@@ -148,6 +157,7 @@ if ($pt_tt == 'COD' && $tt_dh == 'Hoan tat') $is_paid = true;
             </div>
 
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
                 <div class="lg:col-span-2">
                     <div class="bg-white shadow rounded-lg p-6 mb-6">
                         <h3 class="font-bold text-lg mb-4 border-b pb-2">Sản phẩm đã mua</h3>
@@ -162,12 +172,12 @@ if ($pt_tt == 'COD' && $tt_dh == 'Hoan tat') $is_paid = true;
                                     </tr>
                                 </thead>
                                 <tbody class="text-sm">
-                                    <?php while ($item = mysqli_fetch_assoc($items)): ?>
+                                    <?php while ($item = $stmt_items->fetch(PDO::FETCH_ASSOC)): ?>
                                         <tr class="border-b last:border-0">
                                             <td class="py-3 flex items-center gap-3">
-                                                <img src="../<?php echo $item['hinhAnh']; ?>" class="w-12 h-12 rounded border object-cover">
+                                                <img src="../<?php echo htmlspecialchars($item['hinhAnh']); ?>" class="w-12 h-12 rounded border object-cover">
                                                 <div>
-                                                    <p class="font-bold"><?php echo $item['ten']; ?></p>
+                                                    <p class="font-bold"><?php echo htmlspecialchars($item['ten']); ?></p>
                                                     <p class="text-gray-500 text-xs">Size: <?php echo $item['size']; ?></p>
                                                 </div>
                                             </td>
@@ -190,9 +200,9 @@ if ($pt_tt == 'COD' && $tt_dh == 'Hoan tat') $is_paid = true;
                     <div class="bg-white shadow rounded-lg p-6">
                         <h3 class="font-bold text-lg mb-4 border-b pb-2">Thông tin giao hàng</h3>
                         <div class="space-y-4 text-sm">
-                            <div><span class="text-gray-500 block mb-1">Người nhận:</span> <span class="font-bold text-base"><?php echo $order['hoTenNguoiNhan']; ?></span></div>
-                            <div><span class="text-gray-500 block mb-1">Số điện thoại:</span> <span class="font-medium"><?php echo $order['sdtNguoiNhan']; ?></span></div>
-                            <div><span class="text-gray-500 block mb-1">Địa chỉ:</span> <span class="font-medium"><?php echo $order['diaChiGiaoHang']; ?></span></div>
+                            <div><span class="text-gray-500 block mb-1">Người nhận:</span> <span class="font-bold text-base"><?php echo htmlspecialchars($order['hoTenNguoiNhan']); ?></span></div>
+                            <div><span class="text-gray-500 block mb-1">Số điện thoại:</span> <span class="font-medium"><?php echo htmlspecialchars($order['sdtNguoiNhan']); ?></span></div>
+                            <div><span class="text-gray-500 block mb-1">Địa chỉ:</span> <span class="font-medium"><?php echo htmlspecialchars($order['diaChiGiaoHang']); ?></span></div>
 
                             <div class="pt-3 border-t border-gray-100">
                                 <span class="text-gray-500 block mb-1">Thanh toán:</span>

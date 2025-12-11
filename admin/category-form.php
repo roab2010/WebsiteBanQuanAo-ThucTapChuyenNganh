@@ -13,12 +13,14 @@ $moTa = '';
 $anh = '';
 $is_edit = false;
 
-// Chế độ SỬA
+// Chế độ SỬA (PDO)
 if (isset($_GET['id'])) {
     $id = intval($_GET['id']);
-    $sql_edit = "SELECT * FROM DANH_MUC WHERE danhmuc_id = $id";
-    $rs_edit = mysqli_query($conn, $sql_edit);
-    $cat = mysqli_fetch_assoc($rs_edit);
+
+    $stmt = $conn->prepare("SELECT * FROM DANH_MUC WHERE danhmuc_id = ?");
+    $stmt->execute([$id]);
+    $cat = $stmt->fetch(PDO::FETCH_ASSOC);
+
     if ($cat) {
         $is_edit = true;
         $ten = $cat['ten'];
@@ -27,10 +29,10 @@ if (isset($_GET['id'])) {
     }
 }
 
-// XỬ LÝ POST
+// XỬ LÝ POST (PDO)
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $ten = mysqli_real_escape_string($conn, $_POST['ten']);
-    $moTa = mysqli_real_escape_string($conn, $_POST['moTa']);
+    $ten = $_POST['ten'];
+    $moTa = $_POST['moTa'];
 
     // Upload ảnh
     $db_path = $anh;
@@ -43,16 +45,23 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         }
     }
 
-    if ($is_edit) {
-        $sql = "UPDATE DANH_MUC SET ten='$ten', moTa='$moTa', anh='$db_path' WHERE danhmuc_id=$id";
-    } else {
-        $sql = "INSERT INTO DANH_MUC (ten, moTa, anh) VALUES ('$ten', '$moTa', '$db_path')";
-    }
+    try {
+        if ($is_edit) {
+            // UPDATE
+            $sql = "UPDATE DANH_MUC SET ten = ?, moTa = ?, anh = ? WHERE danhmuc_id = ?";
+            $stmt = $conn->prepare($sql);
+            $stmt->execute([$ten, $moTa, $db_path, $id]);
+        } else {
+            // INSERT
+            $sql = "INSERT INTO DANH_MUC (ten, moTa, anh) VALUES (?, ?, ?)";
+            $stmt = $conn->prepare($sql);
+            $stmt->execute([$ten, $moTa, $db_path]);
+        }
 
-    if (mysqli_query($conn, $sql)) {
         header("Location: danhmuc.php");
-    } else {
-        echo "<script>alert('Lỗi: " . mysqli_error($conn) . "');</script>";
+        exit();
+    } catch (PDOException $e) {
+        echo "<script>alert('Lỗi: " . $e->getMessage() . "');</script>";
     }
 }
 ?>
@@ -64,7 +73,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <meta charset="UTF-8">
     <title><?php echo $is_edit ? 'Sửa danh mục' : 'Thêm danh mục'; ?></title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="icon" type="image/png" sizes="32x32" href="assets/img/logoicon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="../assets/img/logoicon.png">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
 
 <body class="bg-gray-100">

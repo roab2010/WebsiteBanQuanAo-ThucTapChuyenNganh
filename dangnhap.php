@@ -5,23 +5,24 @@ include 'config/database.php';
 $error = '';
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-  $email = mysqli_real_escape_string($conn, $_POST['email']);
+  $email = $_POST['email'];
   $password = $_POST['password'];
 
-  // 1. Tìm user trong DB
-  $sql = "SELECT * FROM NGUOI_DUNG WHERE email = '$email'";
-  $result = mysqli_query($conn, $sql);
+  // 1. Tìm user trong DB (PDO)
+  $sql = "SELECT * FROM NGUOI_DUNG WHERE email = ?";
+  $stmt = $conn->prepare($sql);
+  $stmt->execute([$email]);
 
-  if (mysqli_num_rows($result) == 1) {
-    $user = mysqli_fetch_assoc($result);
+  if ($stmt->rowCount() == 1) {
+    $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
     // 2. Kiểm tra mật khẩu (So khớp Hash)
-    // dangnhap.php
-
     if (password_verify($password, $user['matKhau'])) {
-      // ... (Các code lưu session user_id, user... giữ nguyên) ...
+      // Lưu Session
       $_SESSION['user_id'] = $user['nguoi_id'];
       $_SESSION['user'] = $user['ten'];
+      $_SESSION['user_email'] = $user['email'];
+      $_SESSION['login_time'] = time();
 
       // GÁN THÔNG BÁO THÀNH CÔNG
       $_SESSION['alert'] = ['type' => 'success', 'message' => 'Đăng nhập thành công. Chào mừng ' . $user['ten'] . '!'];
@@ -31,8 +32,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
       exit();
     } else {
       $error = "Mật khẩu không chính xác!";
-      // Hoặc dùng Toast cho đẹp:
-      // $_SESSION['alert'] = ['type' => 'error', 'message' => 'Mật khẩu không đúng!'];
     }
   } else {
     $error = "Email này chưa được đăng ký!";
@@ -99,9 +98,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
       </div>
     </div>
   </div>
+
   <div id="toast-container"></div>
   <link rel="stylesheet" href="assets/css/styles.css">
-  <script src="assets/js/scripts.js"></script> <?php if (isset($_SESSION['alert'])): ?>
+  <script src="assets/js/scripts.js"></script>
+
+  <?php if (isset($_SESSION['alert'])): ?>
     <script>
       document.addEventListener('DOMContentLoaded', function() {
         showToast("<?php echo $_SESSION['alert']['message']; ?>", "<?php echo $_SESSION['alert']['type']; ?>");

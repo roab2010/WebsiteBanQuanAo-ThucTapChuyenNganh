@@ -10,18 +10,18 @@ if ($id <= 0) {
     exit();
 }
 
-// 2. Lấy thông tin Danh mục (để hiện cái Tiêu đề to đùng)
-$sql_cat = "SELECT * FROM DANH_MUC WHERE danhmuc_id = $id";
-$result_cat = mysqli_query($conn, $sql_cat);
-$category = mysqli_fetch_assoc($result_cat);
+// 2. Lấy thông tin Danh mục (PDO)
+$stmt_cat = $conn->prepare("SELECT * FROM DANH_MUC WHERE danhmuc_id = ?");
+$stmt_cat->execute([$id]);
+$category = $stmt_cat->fetch(PDO::FETCH_ASSOC);
 
 if (!$category) {
     die("Danh mục không tồn tại!");
 }
 
-// 3. Lấy sản phẩm thuộc danh mục này
-$sql_products = "SELECT * FROM SAN_PHAM WHERE danhmuc_id = $id ORDER BY sanpham_id DESC";
-$products = mysqli_query($conn, $sql_products);
+// 3. Lấy sản phẩm thuộc danh mục này (PDO)
+$stmt_products = $conn->prepare("SELECT * FROM SAN_PHAM WHERE danhmuc_id = ? ORDER BY sanpham_id DESC");
+$stmt_products->execute([$id]);
 
 include './includes/header.php';
 ?>
@@ -38,30 +38,31 @@ include './includes/header.php';
             <?php endif; ?>
         </div>
 
-        <?php if (mysqli_num_rows($products) > 0): ?>
+        <?php if ($stmt_products->rowCount() > 0): ?>
             <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                <?php while ($product = mysqli_fetch_assoc($products)): ?>
+                <?php while ($product = $stmt_products->fetch(PDO::FETCH_ASSOC)): ?>
 
-                    <div class="product-card bg-white border border-gray-100 p-4 rounded-lg shadow-sm hover:shadow-xl transition cursor-pointer group"
+                    <div class="product-card group cursor-pointer border p-4 rounded-lg hover:shadow-lg transition bg-white"
                         onclick="window.location.href='chitiet.php?id=<?php echo $product['sanpham_id']; ?>'">
 
                         <div class="overflow-hidden rounded-lg mb-4 relative">
-                            <img src="<?php echo htmlspecialchars($product['hinhAnh']); ?>" class="w-full h-[350px] object-cover transform group-hover:scale-105 transition duration-500">
+                            <img src="<?php echo htmlspecialchars($product['hinhAnh']); ?>"
+                                class="w-full h-[350px] object-cover transform group-hover:scale-105 transition duration-500">
 
                             <div class="absolute bottom-0 left-0 right-0 p-4 translate-y-full group-hover:translate-y-0 transition duration-300 bg-white/95 backdrop-blur border-t">
                                 <div class="flex gap-2">
                                     <button type="button"
                                         onclick="event.stopPropagation(); openModal(
-    <?php echo $product['sanpham_id']; ?>, 
-    '<?php echo addslashes($product['ten']); ?>', 
-    <?php echo $product['gia']; ?>, 
-    '<?php echo $product['hinhAnh']; ?>',
-    <?php echo $product['soLuongTon']; ?>  // <--- THÊM CÁI NÀY
-)"
+                                            <?php echo $product['sanpham_id']; ?>, 
+                                            '<?php echo addslashes($product['ten']); ?>', 
+                                            <?php echo $product['gia']; ?>, 
+                                            '<?php echo $product['hinhAnh']; ?>',
+                                            <?php echo $product['soLuongTon']; ?>
+                                        )"
                                         class="flex-1 bg-black text-white py-2 font-bold hover:bg-red-600 transition text-xs uppercase">
                                         Thêm giỏ
                                     </button>
-                                    <button class="w-10 h-10 border border-black flex items-center justify-center hover:bg-red-500 hover:text-white transition"
+                                    <button class="w-10 h-10 border border-black flex items-center justify-center hover:bg-red-50 hover:text-white transition"
                                         onclick="event.stopPropagation(); addToWishlist(<?php echo $product['sanpham_id']; ?>, '<?php echo addslashes($product['ten']); ?>')">❤️</button>
                                 </div>
                             </div>
@@ -93,7 +94,7 @@ include './includes/header.php';
     <div class="relative bg-white w-full max-w-4xl mx-auto mt-20 p-6 rounded-lg shadow-2xl animate-fade-in-up flex flex-col md:flex-row gap-8">
         <button onclick="closeModal()" class="absolute top-4 right-4 text-gray-400 hover:text-black text-2xl font-bold">&times;</button>
         <div class="w-full md:w-1/2 bg-gray-100 rounded-lg overflow-hidden flex items-center justify-center">
-            <img id="modalImg" src="" alt="Product Image" class="max-h-[400px] object-contain">
+            <img id="modalImg" src="" class="max-h-[400px] object-contain">
         </div>
         <div class="w-full md:w-1/2 flex flex-col justify-between">
             <div>
@@ -106,7 +107,6 @@ include './includes/header.php';
 
                 <form id="modalBuyForm" action="them-gio-hang.php" method="POST">
                     <input type="hidden" name="sanpham_id" id="modalId">
-
                     <div class="mb-6">
                         <label class="block font-bold mb-2 text-sm">Kích thước:</label>
                         <div class="flex gap-3">
@@ -124,7 +124,6 @@ include './includes/header.php';
                             </label>
                         </div>
                     </div>
-
                     <div class="mb-6">
                         <label class="block font-bold mb-2 text-sm">Số lượng:</label>
                         <div class="flex items-center">
@@ -133,10 +132,7 @@ include './includes/header.php';
                             <button type="button" onclick="updateQty(1)" class="w-8 h-8 bg-gray-200 hover:bg-gray-300 rounded-r font-bold">+</button>
                         </div>
                     </div>
-
-                    <button type="submit" name="add_to_cart" class="w-full bg-red-600 text-white font-bold py-3 rounded hover:bg-red-700 transition uppercase">
-                        THÊM VÀO GIỎ NGAY
-                    </button>
+                    <button type="submit" name="add_to_cart" class="w-full bg-red-600 text-white font-bold py-3 rounded hover:bg-red-700 transition uppercase">THÊM VÀO GIỎ NGAY</button>
                 </form>
 
                 <div id="modalOutOfStockMsg" class="hidden bg-gray-100 p-4 rounded text-center border border-gray-200">
@@ -144,7 +140,6 @@ include './includes/header.php';
                     <p class="text-xs text-gray-500">Vui lòng quay lại sau hoặc xem sản phẩm khác.</p>
                 </div>
             </div>
-
             <div class="mt-6 pt-4 border-t border-gray-100 text-sm flex justify-end">
                 <a id="modalLink" href="#" class="text-gray-500 hover:text-black hover:underline flex items-center gap-1 group">
                     Xem chi tiết sản phẩm <span class="group-hover:translate-x-1 transition-transform">»</span>

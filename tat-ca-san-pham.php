@@ -3,15 +3,20 @@ session_start();
 include 'config/database.php';
 
 $user = $_SESSION['user'] ?? null;
-$cart_count = 0; // (Bạn copy lại đoạn đếm giỏ hàng từ header vào đây nếu cần, hoặc header tự lo)
+// $cart_count đã được xử lý trong header.php nên không cần khai báo lại ở đây
 
-// Lấy TOÀN BỘ sản phẩm (Không giới hạn)
+// Lấy TOÀN BỘ sản phẩm (PDO)
 $products_by_category = [];
-$sql_all = "SELECT sp.*, dm.ten as ten_danhmuc FROM SAN_PHAM sp INNER JOIN DANH_MUC dm ON sp.danhmuc_id = dm.danhmuc_id ORDER BY sp.sanpham_id DESC";
-$result_all = mysqli_query($conn, $sql_all);
+$sql_all = "SELECT sp.*, dm.ten as ten_danhmuc 
+            FROM SAN_PHAM sp 
+            INNER JOIN DANH_MUC dm ON sp.danhmuc_id = dm.danhmuc_id 
+            ORDER BY sp.sanpham_id DESC";
 
-if ($result_all) {
-    while ($row = mysqli_fetch_assoc($result_all)) {
+// Dùng query() vì không có tham số
+$stmt_all = $conn->query($sql_all);
+
+if ($stmt_all) {
+    while ($row = $stmt_all->fetch(PDO::FETCH_ASSOC)) {
         $catName = $row['ten_danhmuc'];
         $products_by_category[$catName][] = $row;
     }
@@ -46,18 +51,24 @@ include './includes/header.php';
                                     <div class="absolute bottom-0 left-0 right-0 p-4 translate-y-full group-hover:translate-y-0 transition duration-300 bg-white/95 backdrop-blur border-t">
                                         <div class="flex gap-2">
                                             <button type="button"
-                                                onclick="event.stopPropagation(); openModal(<?php echo $product['sanpham_id']; ?>, '<?php echo addslashes($product['ten']); ?>', <?php echo $product['gia']; ?>, '<?php echo $product['hinhAnh']; ?>')"
+                                                onclick="event.stopPropagation(); openModal(
+                                                    <?php echo $product['sanpham_id']; ?>, 
+                                                    '<?php echo addslashes($product['ten']); ?>', 
+                                                    <?php echo $product['gia']; ?>, 
+                                                    '<?php echo $product['hinhAnh']; ?>',
+                                                    <?php echo $product['soLuongTon']; ?>
+                                                )"
                                                 class="flex-1 bg-black text-white py-2 font-bold hover:bg-red-600 transition text-xs uppercase">
                                                 Thêm giỏ
                                             </button>
-                                            <button class="w-10 h-10 border border-black flex items-center justify-center hover:bg-red-500 hover:text-white transition"
+                                            <button class="w-10 h-10 border border-black flex items-center justify-center hover:bg-red-50 hover:text-white transition"
                                                 onclick="event.stopPropagation(); addToWishlist(<?php echo $product['sanpham_id']; ?>, '<?php echo addslashes($product['ten']); ?>')">❤️</button>
                                         </div>
                                     </div>
                                 </div>
 
                                 <div class="text-center">
-                                    <h3 class="font-bold text-sm mb-1 hover:text-red-600 transition">
+                                    <h3 class="font-bold text-sm mb-1 hover:text-red-600 transition truncate">
                                         <?php echo htmlspecialchars($product['ten']); ?>
                                     </h3>
                                     <div class="text-red-600 font-bold"><?php echo number_format($product['gia'], 0, ',', '.'); ?>₫</div>
@@ -75,21 +86,19 @@ include './includes/header.php';
     <div class="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity" onclick="closeModal()"></div>
     <div class="relative bg-white w-full max-w-4xl mx-auto mt-20 p-6 rounded-lg shadow-2xl animate-fade-in-up flex flex-col md:flex-row gap-8">
         <button onclick="closeModal()" class="absolute top-4 right-4 text-gray-400 hover:text-black text-2xl font-bold">&times;</button>
-
         <div class="w-full md:w-1/2 bg-gray-100 rounded-lg overflow-hidden flex items-center justify-center">
-            <img id="modalImg" src="" alt="Product Image" class="max-h-[400px] object-contain">
+            <img id="modalImg" src="" class="max-h-[400px] object-contain">
         </div>
-
         <div class="w-full md:w-1/2 flex flex-col justify-between">
             <div>
                 <h2 id="modalName" class="text-2xl font-bold mb-2 uppercase"></h2>
                 <div class="flex items-center gap-4 mb-4">
                     <span id="modalPrice" class="text-3xl text-red-600 font-bold"></span>
-                    <span class="text-sm text-green-600 bg-green-100 px-2 py-1 rounded">Còn hàng</span>
+                    <span id="modalStockLabel"></span>
                 </div>
                 <hr class="border-gray-200 my-4">
 
-                <form action="them-gio-hang.php" method="POST">
+                <form id="modalBuyForm" action="them-gio-hang.php" method="POST">
                     <input type="hidden" name="sanpham_id" id="modalId">
                     <div class="mb-6">
                         <label class="block font-bold mb-2 text-sm">Kích thước:</label>
@@ -118,6 +127,10 @@ include './includes/header.php';
                     </div>
                     <button type="submit" name="add_to_cart" class="w-full bg-red-600 text-white font-bold py-3 rounded hover:bg-red-700 transition uppercase">THÊM VÀO GIỎ NGAY</button>
                 </form>
+
+                <div id="modalOutOfStockMsg" class="hidden bg-gray-100 p-4 rounded text-center border border-gray-200">
+                    <p class="text-red-500 font-bold mb-1">❌ Sản phẩm tạm thời hết hàng</p>
+                </div>
             </div>
             <div class="mt-6 pt-4 border-t border-gray-100 text-sm flex justify-end">
                 <a id="modalLink" href="#" class="text-gray-500 hover:text-black hover:underline flex items-center gap-1 group">

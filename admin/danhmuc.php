@@ -1,36 +1,65 @@
 <?php
+// 1. BẬT BÁO LỖI (Để biết tại sao không hiện)
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
 session_start();
 include '../config/database.php';
 
+// Kiểm tra đăng nhập
 if (!isset($_SESSION['admin_id'])) {
     header("Location: login.php");
     exit();
 }
 
-// --- 1. XỬ LÝ XÓA (Dùng Session Alert thay vì echo script) ---
+// --- XỬ LÝ XÓA ---
 if (isset($_GET['delete'])) {
     $id = intval($_GET['delete']);
+    try {
+        // Kiểm tra ràng buộc
+        $check_stmt = $conn->prepare("SELECT sanpham_id FROM SAN_PHAM WHERE danhmuc_id = ?");
+        $check_stmt->execute([$id]);
 
-    // Kiểm tra danh mục có sản phẩm không
-    $check = mysqli_query($conn, "SELECT * FROM SAN_PHAM WHERE danhmuc_id = $id");
-
-    if (mysqli_num_rows($check) > 0) {
-        $_SESSION['alert'] = ['type' => 'error', 'message' => 'Không thể xóa! Danh mục này đang chứa sản phẩm.'];
-    } else {
-        $sql_delete = "DELETE FROM DANH_MUC WHERE danhmuc_id = $id";
-        if (mysqli_query($conn, $sql_delete)) {
-            $_SESSION['alert'] = ['type' => 'success', 'message' => 'Đã xóa danh mục thành công!'];
+        if ($check_stmt->rowCount() > 0) {
+            $_SESSION['alert'] = ['type' => 'error', 'message' => 'Không thể xóa! Danh mục này đang chứa sản phẩm.'];
         } else {
-            $_SESSION['alert'] = ['type' => 'error', 'message' => 'Lỗi hệ thống: ' . mysqli_error($conn)];
+            $stmt_del = $conn->prepare("DELETE FROM DANH_MUC WHERE danhmuc_id = ?");
+            if ($stmt_del->execute([$id])) {
+                $_SESSION['alert'] = ['type' => 'success', 'message' => 'Đã xóa danh mục!'];
+            } else {
+                $_SESSION['alert'] = ['type' => 'error', 'message' => 'Lỗi xóa danh mục.'];
+            }
         }
+    } catch (PDOException $e) {
+        $_SESSION['alert'] = ['type' => 'error', 'message' => 'Lỗi SQL: ' . $e->getMessage()];
     }
-    // Reload lại trang để hiện thông báo
     header("Location: danhmuc.php");
     exit();
 }
 
-$sql = "SELECT * FROM DANH_MUC ORDER BY danhmuc_id ASC";
-$result = mysqli_query($conn, $sql);
+// --- LẤY DỮ LIỆU & KIỂM TRA LỖI ---
+$categories = [];
+$error_msg = "";
+
+try {
+    // Truy vấn
+    $sql = "SELECT * FROM DANH_MUC ORDER BY danhmuc_id ASC";
+    $stmt = $conn->query($sql);
+
+    // Kiểm tra xem query có chạy được không
+    if ($stmt) {
+        if ($stmt->rowCount() > 0) {
+            $categories = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } else {
+            $error_msg = "Kết nối thành công nhưng BẢNG 'DANH_MUC' ĐANG TRỐNG (0 dòng). Hãy thêm dữ liệu mẫu!";
+        }
+    } else {
+        $error_msg = "Lỗi truy vấn! Có thể sai tên bảng (Phân biệt HOA/thường).";
+    }
+} catch (PDOException $e) {
+    $error_msg = "LỖI CRITICAL: " . $e->getMessage();
+}
 ?>
 
 <!DOCTYPE html>
@@ -40,8 +69,8 @@ $result = mysqli_query($conn, $sql);
     <meta charset="UTF-8">
     <title>Quản lý Danh mục</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="icon" type="image/png" sizes="32x32" href="../assets/img/logoicon.png">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-
     <style>
         #toast-container {
             position: fixed;
@@ -134,6 +163,13 @@ $result = mysqli_query($conn, $sql);
                 </a>
             </div>
 
+            <?php if ($error_msg): ?>
+                <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-6" role="alert">
+                    <p class="font-bold">⚠️ Có lỗi xảy ra:</p>
+                    <p><?php echo $error_msg; ?></p>
+                </div>
+            <?php endif; ?>
+
             <div class="bg-white shadow-lg rounded-xl overflow-hidden w-full lg:w-2/3 mx-auto lg:mx-0">
                 <table class="min-w-full leading-normal">
                     <thead>
@@ -146,44 +182,46 @@ $result = mysqli_query($conn, $sql);
                         </tr>
                     </thead>
                     <tbody>
-                        <?php while ($row = mysqli_fetch_assoc($result)): ?>
-                            <tr class="border-b border-gray-100 hover:bg-gray-50 transition duration-150">
-                                <td class="px-5 py-4 text-sm text-gray-500">#<?php echo $row['danhmuc_id']; ?></td>
+                        <?php if (!empty($categories)): ?>
+                            <?php foreach ($categories as $row): ?>
+                                <tr class="border-b border-gray-100 hover:bg-gray-50 transition duration-150">
+                                    <td class="px-5 py-4 text-sm text-gray-500">#<?php echo $row['danhmuc_id']; ?></td>
 
-                                <td class="px-5 py-4">
-                                    <?php if ($row['anh']): ?>
-                                        <img src="../<?php echo htmlspecialchars($row['anh']); ?>" class="w-12 h-12 object-cover rounded-lg border border-gray-200 shadow-sm">
-                                    <?php else: ?>
-                                        <span class="w-12 h-12 flex items-center justify-center bg-gray-100 text-gray-400 rounded-lg text-xs">No img</span>
-                                    <?php endif; ?>
-                                </td>
+                                    <td class="px-5 py-4">
+                                        <?php if ($row['anh']): ?>
+                                            <img src="../<?php echo htmlspecialchars($row['anh']); ?>" class="w-12 h-12 object-cover rounded-lg border border-gray-200 shadow-sm">
+                                        <?php else: ?>
+                                            <span class="w-12 h-12 flex items-center justify-center bg-gray-100 text-gray-400 rounded-lg text-xs">No img</span>
+                                        <?php endif; ?>
+                                    </td>
 
-                                <td class="px-5 py-4">
-                                    <span class="font-bold text-gray-800 text-base"><?php echo htmlspecialchars($row['ten']); ?></span>
-                                </td>
+                                    <td class="px-5 py-4">
+                                        <span class="font-bold text-gray-800 text-base"><?php echo htmlspecialchars($row['ten']); ?></span>
+                                    </td>
 
-                                <td class="px-5 py-4 text-sm text-gray-500 italic max-w-xs truncate">
-                                    <?php echo htmlspecialchars($row['moTa']); ?>
-                                </td>
+                                    <td class="px-5 py-4 text-sm text-gray-500 italic max-w-xs truncate">
+                                        <?php echo htmlspecialchars($row['moTa']); ?>
+                                    </td>
 
-                                <td class="px-5 py-4 text-center">
-                                    <div class="flex justify-center gap-2">
-                                        <a href="category-form.php?id=<?php echo $row['danhmuc_id']; ?>"
-                                            class="w-8 h-8 flex items-center justify-center rounded-full bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white transition"
-                                            title="Sửa">
-                                            <i class="fas fa-edit"></i>
-                                        </a>
+                                    <td class="px-5 py-4 text-center">
+                                        <div class="flex justify-center gap-2">
+                                            <a href="category-form.php?id=<?php echo $row['danhmuc_id']; ?>"
+                                                class="w-8 h-8 flex items-center justify-center rounded-full bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white transition"
+                                                title="Sửa">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
 
-                                        <button type="button"
-                                            onclick="openDeleteModal('danhmuc.php?delete=<?php echo $row['danhmuc_id']; ?>')"
-                                            class="w-8 h-8 flex items-center justify-center rounded-full bg-red-50 text-red-600 hover:bg-red-600 hover:text-white transition shadow-sm"
-                                            title="Xóa">
-                                            <i class="fas fa-trash-alt"></i>
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                        <?php endwhile; ?>
+                                            <button type="button"
+                                                onclick="openDeleteModal('danhmuc.php?delete=<?php echo $row['danhmuc_id']; ?>')"
+                                                class="w-8 h-8 flex items-center justify-center rounded-full bg-red-50 text-red-600 hover:bg-red-600 hover:text-white transition shadow-sm"
+                                                title="Xóa">
+                                                <i class="fas fa-trash-alt"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
                     </tbody>
                 </table>
             </div>
@@ -197,25 +235,22 @@ $result = mysqli_query($conn, $sql);
                 <i class="fas fa-exclamation-triangle text-2xl text-red-600"></i>
             </div>
             <h3 class="text-lg font-bold text-gray-900 mb-2">Xác nhận xóa?</h3>
-            <p class="text-gray-500 text-sm mb-6">Bạn có chắc chắn muốn xóa danh mục này không? Hành động này không thể hoàn tác.</p>
+            <p class="text-gray-500 text-sm mb-6">Bạn có chắc chắn muốn xóa danh mục này không?</p>
             <div class="flex gap-3 justify-center">
-                <button onclick="closeDeleteModal()" class="px-5 py-2.5 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-lg font-medium transition">Hủy</button>
-                <a id="confirmDeleteBtn" href="#" class="px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition shadow-md">Xóa ngay</a>
+                <button onclick="closeDeleteModal()" class="px-5 py-2.5 bg-gray-200 hover:bg-gray-300 rounded-lg font-medium">Hủy</button>
+                <a id="confirmDeleteBtn" href="#" class="px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium shadow-md">Xóa ngay</a>
             </div>
         </div>
     </div>
 
     <div id="toast-container"></div>
-
     <script src="../assets/js/scripts.js"></script>
     <script>
-        // Hàm mở modal xóa
         function openDeleteModal(url) {
             document.getElementById('confirmDeleteBtn').href = url;
             document.getElementById('deleteModal').classList.remove('hidden');
         }
 
-        // Hàm đóng modal
         function closeDeleteModal() {
             document.getElementById('deleteModal').classList.add('hidden');
         }

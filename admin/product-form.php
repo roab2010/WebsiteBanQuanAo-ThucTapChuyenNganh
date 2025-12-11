@@ -7,7 +7,6 @@ if (!isset($_SESSION['admin_id'])) {
     exit();
 }
 
-// Khởi tạo biến mặc định (để form không bị lỗi khi thêm mới)
 $id = '';
 $ten = '';
 $gia = '';
@@ -15,14 +14,15 @@ $danhmuc_id = '';
 $soLuongTon = '';
 $moTa = '';
 $hinhAnh = '';
-$is_edit = false; // Cờ đánh dấu đang sửa hay thêm
+$is_edit = false;
 
-// NẾU CÓ ID TRÊN URL -> LÀ CHẾ ĐỘ SỬA
+// NẾU CÓ ID TRÊN URL -> LÀ CHẾ ĐỘ SỬA (PDO)
 if (isset($_GET['id'])) {
     $id = intval($_GET['id']);
-    $sql_edit = "SELECT * FROM SAN_PHAM WHERE sanpham_id = $id";
-    $rs_edit = mysqli_query($conn, $sql_edit);
-    $product = mysqli_fetch_assoc($rs_edit);
+
+    $stmt = $conn->prepare("SELECT * FROM SAN_PHAM WHERE sanpham_id = ?");
+    $stmt->execute([$id]);
+    $product = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if ($product) {
         $is_edit = true;
@@ -35,46 +35,50 @@ if (isset($_GET['id'])) {
     }
 }
 
-// LẤY DANH SÁCH DANH MỤC ĐỂ HIỆN SELECT BOX
-$categories = mysqli_query($conn, "SELECT * FROM DANH_MUC");
+// LẤY DANH SÁCH DANH MỤC (PDO)
+$categories = $conn->query("SELECT * FROM DANH_MUC");
 
 // --- XỬ LÝ KHI BẤM LƯU (POST) ---
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $ten = mysqli_real_escape_string($conn, $_POST['ten']);
+    $ten = $_POST['ten'];
     $gia = $_POST['gia'];
     $danhmuc_id = $_POST['danhmuc_id'];
     $soLuongTon = $_POST['soLuongTon'];
-    $moTa = mysqli_real_escape_string($conn, $_POST['moTa']);
+    $moTa = $_POST['moTa'];
 
     // Xử lý Upload ảnh
-    $target_dir = "../assets/img/"; // Thư mục lưu ảnh thật
-    $db_path = $hinhAnh; // Mặc định là ảnh cũ
+    $target_dir = "../assets/img/";
+    $db_path = $hinhAnh;
 
-    // Nếu người dùng có chọn ảnh mới
     if (!empty($_FILES["hinhAnh"]["name"])) {
-        $file_name = time() . "_" . basename($_FILES["hinhAnh"]["name"]); // Thêm time để không trùng tên
+        $file_name = time() . "_" . basename($_FILES["hinhAnh"]["name"]);
         $target_file = $target_dir . $file_name;
 
         if (move_uploaded_file($_FILES["hinhAnh"]["tmp_name"], $target_file)) {
-            $db_path = "assets/img/" . $file_name; // Đường dẫn lưu vào DB
+            $db_path = "assets/img/" . $file_name;
         }
     }
 
-    if ($is_edit) {
-        // UPDATE
-        $sql = "UPDATE SAN_PHAM SET 
-                ten='$ten', gia=$gia, danhmuc_id=$danhmuc_id, soLuongTon=$soLuongTon, moTa='$moTa', hinhAnh='$db_path' 
-                WHERE sanpham_id=$id";
-    } else {
-        // INSERT
-        $sql = "INSERT INTO SAN_PHAM (ten, gia, danhmuc_id, soLuongTon, moTa, hinhAnh) 
-                VALUES ('$ten', $gia, $danhmuc_id, $soLuongTon, '$moTa', '$db_path')";
-    }
+    try {
+        if ($is_edit) {
+            // UPDATE (PDO)
+            $sql = "UPDATE SAN_PHAM SET 
+                    ten = ?, gia = ?, danhmuc_id = ?, soLuongTon = ?, moTa = ?, hinhAnh = ? 
+                    WHERE sanpham_id = ?";
+            $stmt = $conn->prepare($sql);
+            $stmt->execute([$ten, $gia, $danhmuc_id, $soLuongTon, $moTa, $db_path, $id]);
+        } else {
+            // INSERT (PDO)
+            $sql = "INSERT INTO SAN_PHAM (ten, gia, danhmuc_id, soLuongTon, moTa, hinhAnh) 
+                    VALUES (?, ?, ?, ?, ?, ?)";
+            $stmt = $conn->prepare($sql);
+            $stmt->execute([$ten, $gia, $danhmuc_id, $soLuongTon, $moTa, $db_path]);
+        }
 
-    if (mysqli_query($conn, $sql)) {
         header("Location: sanpham.php");
-    } else {
-        echo "<script>alert('Lỗi SQL: " . mysqli_error($conn) . "');</script>";
+        exit();
+    } catch (PDOException $e) {
+        echo "<script>alert('Lỗi SQL: " . $e->getMessage() . "');</script>";
     }
 }
 ?>
@@ -86,7 +90,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <meta charset="UTF-8">
     <title><?php echo $is_edit ? 'Sửa sản phẩm' : 'Thêm sản phẩm'; ?></title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="icon" type="image/png" sizes="32x32" href="assets/img/logoicon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="../assets/img/logoicon.png">
 </head>
 
 <body class="bg-gray-100">
@@ -127,7 +131,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     <div>
                         <label class="block font-bold mb-1">Danh mục</label>
                         <select name="danhmuc_id" class="w-full border p-2 rounded focus:outline-none focus:border-blue-500">
-                            <?php while ($cat = mysqli_fetch_assoc($categories)): ?>
+                            <?php while ($cat = $categories->fetch(PDO::FETCH_ASSOC)): ?>
                                 <option value="<?php echo $cat['danhmuc_id']; ?>"
                                     <?php if ($cat['danhmuc_id'] == $danhmuc_id) echo 'selected'; ?>>
                                     <?php echo $cat['ten']; ?>

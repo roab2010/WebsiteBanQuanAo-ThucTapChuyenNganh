@@ -6,9 +6,9 @@ $error = '';
 $success = '';
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    // Lấy dữ liệu và làm sạch
-    $ten = mysqli_real_escape_string($conn, $_POST['ten']);
-    $email = mysqli_real_escape_string($conn, $_POST['email']);
+    // Lấy dữ liệu (Không cần escape string nữa vì PDO tự lo)
+    $ten = $_POST['ten'];
+    $email = $_POST['email'];
     $password = $_POST['password'];
     $confirm_password = $_POST['confirm_password'];
 
@@ -16,32 +16,32 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     if ($password !== $confirm_password) {
         $error = "Mật khẩu nhập lại không khớp!";
     } else {
-        // 2. Kiểm tra email đã tồn tại trong bảng NGUOI_DUNG chưa
-        $check_sql = "SELECT * FROM NGUOI_DUNG WHERE email = '$email'";
-        $check_result = mysqli_query($conn, $check_sql);
+        // 2. Kiểm tra email (PDO)
+        $check_stmt = $conn->prepare("SELECT * FROM NGUOI_DUNG WHERE email = ?");
+        $check_stmt->execute([$email]);
 
-        if (mysqli_num_rows($check_result) > 0) {
+        if ($check_stmt->rowCount() > 0) {
             $error = "Email này đã được sử dụng, vui lòng chọn email khác!";
         } else {
             // 3. Mã hóa mật khẩu
             $hashed_password = password_hash($password, PASSWORD_DEFAULT);
 
-            // 4. Thêm vào Database
-            $sql = "INSERT INTO NGUOI_DUNG (ten, email, matKhau) VALUES ('$ten', '$email', '$hashed_password')";
+            // 4. Thêm vào Database (PDO)
+            try {
+                $sql = "INSERT INTO NGUOI_DUNG (ten, email, matKhau) VALUES (?, ?, ?)";
+                $stmt = $conn->prepare($sql);
 
-            if (mysqli_query($conn, $sql)) {
-                // Gán thông báo thành công
-                $_SESSION['alert'] = ['type' => 'success', 'message' => 'Đăng ký thành công! Vui lòng đăng nhập.'];
-                // Chuyển hướng NGAY LẬP TỨC sang trang đăng nhập
-                header("Location: dangnhap.php");
+                if ($stmt->execute([$ten, $email, $hashed_password])) {
+                    // Gán thông báo thành công
+                    $_SESSION['alert'] = ['type' => 'success', 'message' => 'Đăng ký thành công! Vui lòng đăng nhập.'];
 
-
-                exit();
-            } else {
-                // Lỗi thì ở lại trang hiện tại và báo lỗi
-                $error = "Lỗi hệ thống: " . mysqli_error($conn);
-                // Hoặc dùng Toast nếu muốn:
-                // $_SESSION['alert'] = ['type' => 'error', 'message' => 'Lỗi: ' . mysqli_error($conn)];
+                    // Chuyển hướng NGAY LẬP TỨC sang trang đăng nhập
+                    header("Location: dangnhap.php");
+                    exit();
+                }
+            } catch (PDOException $e) {
+                // Bắt lỗi nếu có
+                $error = "Lỗi hệ thống: " . $e->getMessage();
             }
         }
     }
@@ -125,7 +125,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
     <div id="toast-container"></div>
     <link rel="stylesheet" href="assets/css/styles.css">
-    <script src="assets/js/scripts.js"></script> <?php if (isset($_SESSION['alert'])): ?>
+    <script src="assets/js/scripts.js"></script>
+
+    <?php if (isset($_SESSION['alert'])): ?>
         <script>
             document.addEventListener('DOMContentLoaded', function() {
                 showToast("<?php echo $_SESSION['alert']['message']; ?>", "<?php echo $_SESSION['alert']['type']; ?>");

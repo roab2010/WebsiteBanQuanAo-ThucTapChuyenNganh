@@ -1,11 +1,12 @@
 <?php
-// 1. Lấy tên file hiện tại (ví dụ: index.php, donhang.php)
+// admin/includes/sidebar.php
+
+// 1. Lấy tên file hiện tại
 $current_page = basename($_SERVER['PHP_SELF']);
 
-// 2. Hàm kiểm tra để active menu (Tô sáng mục đang chọn)
+// 2. Hàm kiểm tra active menu
 function activeClass($page, $current)
 {
-    // Nếu trang hiện tại trùng với link, hoặc là trang con của nó (ví dụ chi tiết đơn hàng cũng tính là đơn hàng)
     if (
         $page == $current || ($page == 'donhang.php' && $current == 'chitietdonhang.php')
         || ($page == 'sanpham.php' && $current == 'product-form.php')
@@ -17,13 +18,16 @@ function activeClass($page, $current)
     }
 }
 
-// 3. Tính số đơn hàng mới (Để hiện thông báo đỏ)
+// 3. Tính số đơn hàng mới (Chuyển sang PDO)
 $new_orders_count = 0;
 if (isset($conn)) {
     $sql_count = "SELECT COUNT(*) as c FROM DON_HANG WHERE trangThaiDH = 'Cho xu ly'";
-    $rs = mysqli_query($conn, $sql_count);
-    if ($rs) {
-        $row = mysqli_fetch_assoc($rs);
+
+    // Dùng query() của PDO
+    $stmt = $conn->query($sql_count);
+
+    if ($stmt) {
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
         $new_orders_count = $row['c'];
     }
 }

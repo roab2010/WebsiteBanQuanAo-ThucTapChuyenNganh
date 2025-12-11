@@ -10,33 +10,46 @@ if (!isset($_SESSION['user_id'])) {
 
 $user_id = $_SESSION['user_id'];
 
-// Xử lý đăng xuất
+// Xử lý đăng xuất (Nếu có link logout ở trang này)
 if (isset($_GET['logout'])) {
     session_destroy();
     header("Location: dangnhap.php");
     exit();
 }
 
-// 2. Xử lý XÓA sản phẩm khỏi giỏ
+// 2. Xử lý XÓA sản phẩm khỏi giỏ (PDO)
 if (isset($_GET['delete'])) {
     $cart_id = intval($_GET['delete']);
-    $sql_delete = "DELETE FROM GIO_HANG WHERE giohang_id = $cart_id AND nguoi_id = $user_id";
-    mysqli_query($conn, $sql_delete);
-    $_SESSION['alert'] = [
-        'type' => 'success',
-        'message' => 'Đã xóa sản phẩm khỏi giỏ hàng.'
-    ];
-    header("Location: giohang.php"); // Load lại trang để cập nhật
+
+    // Dùng PDO Prepared Statement để xóa
+    $sql_delete = "DELETE FROM GIO_HANG WHERE giohang_id = ? AND nguoi_id = ?";
+    $stmt_delete = $conn->prepare($sql_delete);
+
+    if ($stmt_delete->execute([$cart_id, $user_id])) {
+        $_SESSION['alert'] = [
+            'type' => 'success',
+            'message' => 'Đã xóa sản phẩm khỏi giỏ hàng.'
+        ];
+    } else {
+        $_SESSION['alert'] = [
+            'type' => 'error',
+            'message' => 'Lỗi khi xóa sản phẩm.'
+        ];
+    }
+
+    header("Location: giohang.php"); // Load lại trang
     exit();
 }
 
-// 3. Lấy danh sách sản phẩm trong giỏ (JOIN bảng GIO_HANG và SAN_PHAM)
+// 3. Lấy danh sách sản phẩm trong giỏ (PDO)
 $sql = "SELECT gh.*, sp.ten, sp.gia, sp.hinhAnh 
         FROM GIO_HANG gh
         JOIN SAN_PHAM sp ON gh.sanpham_id = sp.sanpham_id
-        WHERE gh.nguoi_id = $user_id
+        WHERE gh.nguoi_id = ?
         ORDER BY gh.ngayThem DESC";
-$result = mysqli_query($conn, $sql);
+
+$stmt = $conn->prepare($sql);
+$stmt->execute([$user_id]);
 
 // Biến tính tổng tiền
 $total_money = 0;
@@ -47,7 +60,7 @@ include './includes/header.php';
 <div class="container mx-auto px-4 py-12">
     <h1 class="text-3xl font-bold mb-8 uppercase tracking-wide border-b pb-4">Giỏ hàng của bạn</h1>
 
-    <?php if (mysqli_num_rows($result) > 0): ?>
+    <?php if ($stmt->rowCount() > 0): ?>
         <div class="flex flex-col lg:flex-row gap-8">
 
             <div class="w-full lg:w-2/3">
@@ -59,16 +72,18 @@ include './includes/header.php';
                         <div class="col-span-2 text-center">Thành tiền</div>
                     </div>
 
-                    <?php while ($item = mysqli_fetch_assoc($result)):
+                    <?php while ($item = $stmt->fetch(PDO::FETCH_ASSOC)):
                         $subtotal = $item['gia'] * $item['soLuong'];
                         $total_money += $subtotal;
                     ?>
                         <div class="grid grid-cols-1 md:grid-cols-12 gap-4 p-4 items-center border-b last:border-0 hover:bg-gray-50 transition">
 
                             <div class="col-span-12 md:col-span-6 flex items-center gap-4">
-                                <a href="giohang.php?delete=<?php echo $item['giohang_id']; ?>"
-                                    class="md:hidden text-gray-400 hover:text-red-500 text-xl"
-                                    onclick="return confirm('Xóa sản phẩm này?')">&times;</a>
+                                <a href="#"
+                                    onclick="event.preventDefault(); showConfirmModal('giohang.php?delete=<?php echo $item['giohang_id']; ?>')"
+                                    class="md:hidden text-gray-400 hover:text-red-500 text-xl">
+                                    &times;
+                                </a>
 
                                 <img src="<?php echo htmlspecialchars($item['hinhAnh']); ?>" class="w-20 h-24 object-cover rounded border">
 
@@ -154,6 +169,7 @@ include './includes/header.php';
         </div>
     <?php endif; ?>
 </div>
+
 <div id="confirmModal" class="fixed inset-0 z-[9999] hidden">
     <div class="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity" onclick="closeConfirmModal()"></div>
 
@@ -183,14 +199,11 @@ include './includes/header.php';
 
 <script>
     function showConfirmModal(deleteUrl) {
-        // 1. Gán đường dẫn xóa vào nút "Đồng ý"
         document.getElementById('confirmDeleteBtn').href = deleteUrl;
-        // 2. Hiện Modal
         document.getElementById('confirmModal').classList.remove('hidden');
     }
 
     function closeConfirmModal() {
-        // Ẩn Modal
         document.getElementById('confirmModal').classList.add('hidden');
     }
 </script>

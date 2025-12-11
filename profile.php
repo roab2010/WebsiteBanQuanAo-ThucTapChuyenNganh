@@ -10,39 +10,42 @@ if (!isset($_SESSION['user_id'])) {
 
 $user_id = $_SESSION['user_id'];
 
-// --- PHẦN XỬ LÝ CẬP NHẬT THÔNG TIN (KHI BẤM LƯU) ---
+// --- PHẦN XỬ LÝ CẬP NHẬT THÔNG TIN (POST) ---
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    // Lấy dữ liệu từ form và làm sạch
-    $ten = mysqli_real_escape_string($conn, $_POST['ten']);
-    $sdt = mysqli_real_escape_string($conn, $_POST['sdt']);
-    $diaChi = mysqli_real_escape_string($conn, $_POST['diaChi']);
+    // Lấy dữ liệu (PDO tự động làm sạch, không cần escape string)
+    $ten = $_POST['ten'];
+    $sdt = $_POST['sdt'];
+    $diaChi = $_POST['diaChi'];
 
-    // Validate cơ bản (Ví dụ: Tên không được để trống)
+    // Validate cơ bản
     if (empty($ten)) {
         $_SESSION['alert'] = ['type' => 'error', 'message' => 'Tên hiển thị không được để trống!'];
     } else {
-        // Cập nhật vào Database
-        $sql_update = "UPDATE NGUOI_DUNG SET ten = '$ten', sdt = '$sdt', diaChi = '$diaChi' WHERE nguoi_id = $user_id";
+        try {
+            // Cập nhật vào Database (PDO Prepared Statement)
+            $sql_update = "UPDATE NGUOI_DUNG SET ten = ?, sdt = ?, diaChi = ? WHERE nguoi_id = ?";
+            $stmt_update = $conn->prepare($sql_update);
 
-        if (mysqli_query($conn, $sql_update)) {
-            // Cập nhật lại Session tên người dùng (để Header hiển thị tên mới ngay lập tức)
-            $_SESSION['user'] = $ten;
+            if ($stmt_update->execute([$ten, $sdt, $diaChi, $user_id])) {
+                // Cập nhật lại Session tên người dùng
+                $_SESSION['user'] = $ten;
 
-            $_SESSION['alert'] = ['type' => 'success', 'message' => 'Cập nhật hồ sơ thành công!'];
+                $_SESSION['alert'] = ['type' => 'success', 'message' => 'Cập nhật hồ sơ thành công!'];
 
-            // Refresh lại trang để hiện dữ liệu mới
-            header("Location: profile.php");
-            exit();
-        } else {
-            $_SESSION['alert'] = ['type' => 'error', 'message' => 'Lỗi: ' . mysqli_error($conn)];
+                // Refresh lại trang
+                header("Location: profile.php");
+                exit();
+            }
+        } catch (PDOException $e) {
+            $_SESSION['alert'] = ['type' => 'error', 'message' => 'Lỗi: ' . $e->getMessage()];
         }
     }
 }
 
-// 2. Lấy thông tin người dùng hiện tại (Sau khi update xong thì lấy lại để hiển thị)
-$sql = "SELECT * FROM NGUOI_DUNG WHERE nguoi_id = $user_id";
-$result = mysqli_query($conn, $sql);
-$user_info = mysqli_fetch_assoc($result);
+// 2. Lấy thông tin người dùng hiện tại (PDO)
+$stmt_user = $conn->prepare("SELECT * FROM NGUOI_DUNG WHERE nguoi_id = ?");
+$stmt_user->execute([$user_id]);
+$user_info = $stmt_user->fetch(PDO::FETCH_ASSOC);
 
 include './includes/header.php';
 ?>

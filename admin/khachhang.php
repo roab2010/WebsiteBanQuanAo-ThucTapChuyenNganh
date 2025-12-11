@@ -1,15 +1,44 @@
 <?php
+// BẬT BÁO LỖI (Để biết tại sao không hiện)
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
 session_start();
+
+// Kiểm tra đường dẫn file config
+if (!file_exists('../config/database.php')) {
+    die("<h1 style='color:red'>LỖI: Không tìm thấy file config/database.php</h1>");
+}
 include '../config/database.php';
+
+// Kiểm tra xem $conn có phải là PDO không (Quan trọng!)
+if (!($conn instanceof PDO)) {
+    die("<h1 style='color:red'>LỖI NGHIÊM TRỌNG: File config/database.php chưa chuyển sang PDO! Hãy sửa file config trước.</h1>");
+}
 
 if (!isset($_SESSION['admin_id'])) {
     header("Location: login.php");
     exit();
 }
 
-// Lấy danh sách khách hàng
-$sql = "SELECT * FROM NGUOI_DUNG ORDER BY nguoi_id DESC";
-$result = mysqli_query($conn, $sql);
+$customers = [];
+$error_msg = "";
+
+try {
+    // Thử lấy danh sách khách hàng
+    $sql = "SELECT * FROM NGUOI_DUNG ORDER BY nguoi_id DESC";
+    $stmt = $conn->query($sql);
+
+    if ($stmt->rowCount() > 0) {
+        $customers = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    } else {
+        $error_msg = "Kết nối OK nhưng chưa có khách hàng nào.";
+    }
+} catch (PDOException $e) {
+    // Nếu lỗi (thường là sai tên bảng)
+    $error_msg = "❌ LỖI SQL: " . $e->getMessage() . "<br>Gợi ý: Kiểm tra lại tên bảng trong Database xem là 'NGUOI_DUNG' hay 'nguoi_dung'?";
+}
 ?>
 
 <!DOCTYPE html>
@@ -20,7 +49,7 @@ $result = mysqli_query($conn, $sql);
     <title>Quản lý Khách hàng</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <link rel="icon" type="image/png" sizes="32x32" href="assets/img/logoicon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="../assets/img/logoicon.png">
 </head>
 
 <body class="bg-gray-100">
@@ -31,42 +60,41 @@ $result = mysqli_query($conn, $sql);
         <main class="flex-1 p-8 overflow-y-auto">
             <h2 class="text-3xl font-bold mb-6">Danh sách Khách hàng</h2>
 
+            <?php if ($error_msg): ?>
+                <div class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-4">
+                    <p class="font-bold">⚠️ Thông báo:</p>
+                    <p><?php echo $error_msg; ?></p>
+                </div>
+            <?php endif; ?>
+
             <div class="bg-white shadow-md rounded-lg overflow-hidden">
                 <table class="min-w-full leading-normal">
                     <thead>
                         <tr class="bg-gray-800 text-white text-left">
-                            <th class="px-5 py-3 uppercase text-xs font-semibold">ID</th>
-                            <th class="px-5 py-3 uppercase text-xs font-semibold">Tên hiển thị</th>
-                            <th class="px-5 py-3 uppercase text-xs font-semibold">Email (Tài khoản)</th>
-                            <th class="px-5 py-3 uppercase text-xs font-semibold">Số điện thoại</th>
-                            <th class="px-5 py-3 uppercase text-xs font-semibold">Địa chỉ</th>
+                            <th class="px-5 py-3 text-xs font-semibold">ID</th>
+                            <th class="px-5 py-3 text-xs font-semibold">Tên hiển thị</th>
+                            <th class="px-5 py-3 text-xs font-semibold">Email</th>
+                            <th class="px-5 py-3 text-xs font-semibold">SĐT</th>
+                            <th class="px-5 py-3 text-xs font-semibold">Địa chỉ</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <?php while ($row = mysqli_fetch_assoc($result)): ?>
-                            <tr class="border-b border-gray-200 hover:bg-gray-50 text-sm">
-                                <td class="px-5 py-4">#<?php echo $row['nguoi_id']; ?></td>
-                                <td class="px-5 py-4 font-bold text-gray-800">
-                                    <div class="flex items-center">
-                                        <div class="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center mr-3 text-gray-600 font-bold uppercase">
-                                            <?php echo substr($row['ten'], 0, 1); ?>
-                                        </div>
-                                        <?php echo htmlspecialchars($row['ten']); ?>
-                                    </div>
-                                </td>
-                                <td class="px-5 py-4 text-blue-600"><?php echo htmlspecialchars($row['email']); ?></td>
-                                <td class="px-5 py-4"><?php echo $row['sdt'] ?? '---'; ?></td>
-                                <td class="px-5 py-4 text-gray-500 truncate max-w-xs" title="<?php echo $row['diaChi']; ?>">
-                                    <?php echo htmlspecialchars($row['diaChi'] ?? '---'); ?>
-                                </td>
-                            </tr>
-                        <?php endwhile; ?>
+                        <?php if (!empty($customers)): ?>
+                            <?php foreach ($customers as $row): ?>
+                                <tr class="border-b border-gray-200 hover:bg-gray-50 text-sm">
+                                    <td class="px-5 py-4">#<?php echo $row['nguoi_id']; ?></td>
+                                    <td class="px-5 py-4 font-bold"><?php echo htmlspecialchars($row['ten']); ?></td>
+                                    <td class="px-5 py-4 text-blue-600"><?php echo htmlspecialchars($row['email']); ?></td>
+                                    <td class="px-5 py-4"><?php echo $row['sdt'] ?? '---'; ?></td>
+                                    <td class="px-5 py-4 text-gray-500 truncate max-w-xs"><?php echo htmlspecialchars($row['diaChi'] ?? '---'); ?></td>
+                                </tr>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
                     </tbody>
                 </table>
             </div>
         </main>
     </div>
-
 </body>
 
 </html>

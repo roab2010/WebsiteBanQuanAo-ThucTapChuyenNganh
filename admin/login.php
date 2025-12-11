@@ -6,15 +6,17 @@ include '../config/database.php';
 $error = '';
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $email = mysqli_real_escape_string($conn, $_POST['email']);
+    $email = $_POST['email']; // PDO tự xử lý bảo mật, không cần escape tay
     $password = $_POST['password'];
 
-    // Tìm trong bảng ADMIN (chứ không phải NGUOI_DUNG)
-    $sql = "SELECT * FROM ADMIN WHERE email = '$email'";
-    $result = mysqli_query($conn, $sql);
+    // Tìm trong bảng ADMIN (PDO Prepared Statement)
+    $sql = "SELECT * FROM ADMIN WHERE email = ?";
+    $stmt = $conn->prepare($sql);
+    $stmt->execute([$email]);
 
-    if (mysqli_num_rows($result) == 1) {
-        $admin = mysqli_fetch_assoc($result);
+    // Kiểm tra có dòng nào trả về không
+    if ($stmt->rowCount() == 1) {
+        $admin = $stmt->fetch(PDO::FETCH_ASSOC);
 
         if (password_verify($password, $admin['matKhau'])) {
             // Lưu Session đặc biệt cho Admin
@@ -39,9 +41,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 <head>
     <meta charset="UTF-8">
     <title>Đăng nhập Admin</title>
-    <link rel="icon" type="image/png" sizes="32x32" href="assets/img/logoicon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="../assets/img/logoicon.png">
     <script src="https://cdn.tailwindcss.com"></script>
-
 </head>
 
 <body class="bg-gray-900 h-screen flex items-center justify-center">

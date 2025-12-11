@@ -8,23 +8,26 @@ if (!isset($_SESSION['admin_id'])) {
     exit();
 }
 
-// 1. THỐNG KÊ SỐ LIỆU
+// 1. THỐNG KÊ SỐ LIỆU (PDO)
 // Tổng sản phẩm
-$total_products = mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) as c FROM SAN_PHAM"))['c'];
+$stmt_prod = $conn->query("SELECT COUNT(*) as c FROM SAN_PHAM");
+$total_products = $stmt_prod->fetch(PDO::FETCH_ASSOC)['c'];
 
 // Tổng đơn hàng
-$total_orders = mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) as c FROM DON_HANG"))['c'];
+$stmt_ord = $conn->query("SELECT COUNT(*) as c FROM DON_HANG");
+$total_orders = $stmt_ord->fetch(PDO::FETCH_ASSOC)['c'];
 
 // Đơn hàng mới (Chờ xử lý)
-$new_orders = mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) as c FROM DON_HANG WHERE trangThaiDH = 'Cho xu ly'"))['c'];
+$stmt_new = $conn->query("SELECT COUNT(*) as c FROM DON_HANG WHERE trangThaiDH = 'Cho xu ly'");
+$new_orders = $stmt_new->fetch(PDO::FETCH_ASSOC)['c'];
 
 // Tổng khách hàng
-$total_users = mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) as c FROM NGUOI_DUNG"))['c'];
+$stmt_user = $conn->query("SELECT COUNT(*) as c FROM NGUOI_DUNG");
+$total_users = $stmt_user->fetch(PDO::FETCH_ASSOC)['c'];
 
-// TỔNG DOANH THU (Chỉ tính những đơn đã 'Hoàn tất' hoặc đã 'Thanh toán')
-// Logic: Lấy tổng tiền của các đơn có trạng thái 'Hoan tat'
-$revenue_query = mysqli_query($conn, "SELECT SUM(tongTien) as total FROM DON_HANG WHERE trangThaiDH = 'Hoan tat'");
-$revenue_data = mysqli_fetch_assoc($revenue_query);
+// TỔNG DOANH THU
+$stmt_rev = $conn->query("SELECT SUM(tongTien) as total FROM DON_HANG WHERE trangThaiDH = 'Hoan tat'");
+$revenue_data = $stmt_rev->fetch(PDO::FETCH_ASSOC);
 $total_revenue = $revenue_data['total'] ?? 0;
 
 ?>
@@ -36,6 +39,7 @@ $total_revenue = $revenue_data['total'] ?? 0;
     <meta charset="UTF-8">
     <title>Dashboard - Admin Quản Trị</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="icon" type="image/png" sizes="32x32" href="../assets/img/logoicon.png">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
 
@@ -121,12 +125,12 @@ $total_revenue = $revenue_data['total'] ?? 0;
                         </thead>
                         <tbody class="text-sm">
                             <?php
-                            // Lấy 5 đơn hàng mới nhất
+                            // Lấy 5 đơn hàng mới nhất (PDO)
                             $sql_recent = "SELECT * FROM DON_HANG ORDER BY donhang_id DESC LIMIT 5";
-                            $rs_recent = mysqli_query($conn, $sql_recent);
+                            $stmt_recent = $conn->query($sql_recent);
 
-                            if (mysqli_num_rows($rs_recent) > 0) {
-                                while ($row = mysqli_fetch_assoc($rs_recent)):
+                            if ($stmt_recent->rowCount() > 0) {
+                                while ($row = $stmt_recent->fetch(PDO::FETCH_ASSOC)):
                                     $status_class = ($row['trangThaiDH'] == 'Cho xu ly') ? 'text-yellow-600 bg-yellow-100' : 'text-gray-600 bg-gray-100';
                             ?>
                                     <tr class="border-b last:border-0 hover:bg-gray-50 transition">

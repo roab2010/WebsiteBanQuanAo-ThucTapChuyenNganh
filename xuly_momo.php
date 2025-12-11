@@ -13,10 +13,11 @@ if (isset($_GET['resultCode'])) {
 
     if ($resultCode == '0') {
         // === THÀNH CÔNG ===
-        // Cập nhật trạng thái đơn hàng
+        // Cập nhật trạng thái đơn hàng (PDO)
         if ($donhang_id > 0) {
-            $sql = "UPDATE DON_HANG SET trangThaiTT = 'Da thanh toan MoMo' WHERE donhang_id = $donhang_id";
-            mysqli_query($conn, $sql);
+            $sql = "UPDATE DON_HANG SET trangThaiTT = 'Da thanh toan MoMo' WHERE donhang_id = ?";
+            $stmt = $conn->prepare($sql);
+            $stmt->execute([$donhang_id]);
         }
 
         $_SESSION['alert'] = [

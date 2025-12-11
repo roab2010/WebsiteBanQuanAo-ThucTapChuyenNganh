@@ -9,26 +9,30 @@ if ($id <= 0) {
     die("Sản phẩm không hợp lệ!");
 }
 
-// 2. Lấy thông tin sản phẩm hiện tại
-$sql = "SELECT * FROM SAN_PHAM WHERE sanpham_id = $id";
-$result = mysqli_query($conn, $sql);
-$product = mysqli_fetch_assoc($result);
+// 2. Lấy thông tin sản phẩm (PDO)
+$stmt = $conn->prepare("SELECT * FROM SAN_PHAM WHERE sanpham_id = ?");
+$stmt->execute([$id]);
+$product = $stmt->fetch(PDO::FETCH_ASSOC);
 
 if (!$product) {
     die("Sản phẩm không tồn tại!");
 }
+
+// 3. Lấy ĐÁNH GIÁ (PDO)
 $sql_reviews = "SELECT dg.*, nd.ten as ten_nguoi_dung 
                 FROM DANH_GIA dg 
                 JOIN NGUOI_DUNG nd ON dg.nguoi_id = nd.nguoi_id 
-                WHERE dg.sanpham_id = $id 
+                WHERE dg.sanpham_id = ? 
                 ORDER BY dg.ngayTao DESC";
-// 3. Lấy ĐÁNH GIÁ THẬT từ Database (JOIN với bảng NGUOI_DUNG để lấy tên)
-$reviews = mysqli_query($conn, $sql_reviews);
-$total_reviews = mysqli_num_rows($reviews);
-// 3. Lấy 4 Sản phẩm liên quan (Cùng danh mục, trừ chính nó ra)
+$stmt_reviews = $conn->prepare($sql_reviews);
+$stmt_reviews->execute([$id]);
+$total_reviews = $stmt_reviews->rowCount(); // Đếm số dòng bằng PDO
+
+// 4. Lấy Sản phẩm liên quan (PDO)
 $cat_id = $product['danhmuc_id'];
-$sql_related = "SELECT * FROM SAN_PHAM WHERE danhmuc_id = $cat_id AND sanpham_id != $id LIMIT 4";
-$related_products = mysqli_query($conn, $sql_related);
+$sql_related = "SELECT * FROM SAN_PHAM WHERE danhmuc_id = ? AND sanpham_id != ? LIMIT 4";
+$stmt_related = $conn->prepare($sql_related);
+$stmt_related->execute([$cat_id, $id]);
 
 include './includes/header.php';
 ?>
@@ -52,14 +56,12 @@ include './includes/header.php';
                         Còn <?php echo $product['soLuongTon']; ?> sản phẩm
                     </span>
                 <?php else: ?>
-                    <span class="bg-red-100 text-red-800 text-sm font-bold px-3 py-1 rounded">
-                        HẾT HÀNG
-                    </span>
+                    <span class="bg-red-100 text-red-800 text-sm font-bold px-3 py-1 rounded">HẾT HÀNG</span>
                 <?php endif; ?>
             </div>
 
             <p class="text-gray-600 mb-8 leading-relaxed text-lg border-b pb-6">
-                <?php echo htmlspecialchars($product['moTa'] ?? 'Chưa có mô tả chi tiết cho sản phẩm này.'); ?>
+                <?php echo nl2br(htmlspecialchars($product['moTa'] ?? 'Chưa có mô tả chi tiết.')); ?>
             </p>
 
             <?php if ($product['soLuongTon'] > 0): ?>
@@ -85,40 +87,22 @@ include './includes/header.php';
                         <label class="block font-bold mb-3 text-lg">Số lượng:</label>
                         <div class="flex items-center">
                             <button type="button" onclick="this.nextElementSibling.stepDown()" class="w-10 h-10 bg-gray-100 hover:bg-gray-200 border border-gray-300 rounded-l text-xl font-bold">-</button>
-
-                            <input type="number" name="soLuong" value="1" min="1" max="<?php echo $product['soLuongTon']; ?>"
-                                class="w-16 h-10 border-t border-b border-gray-300 text-center focus:outline-none bg-white font-bold" readonly>
-
+                            <input type="number" name="soLuong" value="1" min="1" max="<?php echo $product['soLuongTon']; ?>" class="w-16 h-10 border-t border-b border-gray-300 text-center focus:outline-none bg-white font-bold" readonly>
                             <button type="button" onclick="this.previousElementSibling.stepUp()" class="w-10 h-10 bg-gray-100 hover:bg-gray-200 border border-gray-300 rounded-r text-xl font-bold">+</button>
                         </div>
                         <p class="text-xs text-gray-500 mt-2">Tối đa <?php echo $product['soLuongTon']; ?> sản phẩm</p>
                     </div>
 
                     <div class="flex gap-4">
-                        <button type="submit" name="add_to_cart" class="flex-1 bg-red-600 text-white py-4 font-bold rounded hover:bg-red-700 transition uppercase text-lg shadow-md">
-                            THÊM VÀO GIỎ NGAY
-                        </button>
-
-                        <button type="button"
-                            onclick="addToWishlist(<?php echo $product['sanpham_id']; ?>, '<?php echo addslashes($product['ten']); ?>')"
-                            class="border-2 border-gray-300 w-16 flex items-center justify-center rounded hover:bg-red-50 hover:text-red-500 hover:border-red-500 transition text-2xl"
-                            title="Thêm vào yêu thích">
-                            ❤️
-                        </button>
+                        <button type="submit" name="add_to_cart" class="flex-1 bg-red-600 text-white py-4 font-bold rounded hover:bg-red-700 transition uppercase text-lg shadow-md">THÊM VÀO GIỎ NGAY</button>
+                        <button type="button" onclick="addToWishlist(<?php echo $product['sanpham_id']; ?>, '<?php echo addslashes($product['ten']); ?>')" class="border-2 border-gray-300 w-16 flex items-center justify-center rounded hover:bg-red-50 hover:text-red-500 hover:border-red-500 transition text-2xl" title="Thêm vào yêu thích">❤️</button>
                     </div>
                 </form>
-
             <?php else: ?>
                 <div class="bg-gray-100 p-6 rounded-lg text-center border border-gray-300">
                     <p class="text-xl font-bold text-gray-500 mb-2">❌ Sản phẩm tạm thời hết hàng</p>
-                    <p class="text-sm text-gray-400">Vui lòng quay lại sau hoặc chọn sản phẩm khác.</p>
-
                     <div class="mt-4">
-                        <button type="button"
-                            onclick="addToWishlist(<?php echo $product['sanpham_id']; ?>, '<?php echo addslashes($product['ten']); ?>')"
-                            class="text-blue-600 hover:underline font-bold">
-                            ❤️ Lưu vào yêu thích để theo dõi
-                        </button>
+                        <button type="button" onclick="addToWishlist(<?php echo $product['sanpham_id']; ?>, '<?php echo addslashes($product['ten']); ?>')" class="text-blue-600 hover:underline font-bold">❤️ Lưu vào yêu thích để theo dõi</button>
                     </div>
                 </div>
             <?php endif; ?>
@@ -141,7 +125,7 @@ include './includes/header.php';
 
         <?php if ($total_reviews > 0): ?>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <?php while ($review = mysqli_fetch_assoc($reviews)): ?>
+                <?php while ($review = $stmt_reviews->fetch(PDO::FETCH_ASSOC)): ?>
                     <div class="bg-gray-50 p-6 rounded-lg shadow-sm">
                         <div class="flex items-center gap-4 mb-4">
                             <div class="w-12 h-12 bg-gray-300 rounded-full flex items-center justify-center font-bold text-gray-600 uppercase">
@@ -150,12 +134,7 @@ include './includes/header.php';
                             <div>
                                 <h4 class="font-bold"><?php echo htmlspecialchars($review['ten_nguoi_dung']); ?></h4>
                                 <div class="text-yellow-500 text-sm">
-                                    <?php
-                                    // Vòng lặp in ngôi sao
-                                    for ($i = 1; $i <= 5; $i++) {
-                                        echo ($i <= $review['soSao']) ? '★' : '☆';
-                                    }
-                                    ?>
+                                    <?php for ($i = 1; $i <= 5; $i++) echo ($i <= $review['soSao']) ? '★' : '☆'; ?>
                                 </div>
                             </div>
                             <span class="text-gray-400 text-sm ml-auto">
@@ -173,50 +152,29 @@ include './includes/header.php';
             </div>
         <?php endif; ?>
     </div>
+
     <hr class="border-gray-200 my-12">
 
-    <?php if (mysqli_num_rows($related_products) > 0): ?>
+    <?php if ($stmt_related->rowCount() > 0): ?>
         <div>
             <h2 class="text-2xl font-bold mb-8 uppercase tracking-wide text-center">Sản phẩm liên quan</h2>
-
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <?php while ($related = mysqli_fetch_assoc($related_products)): ?>
-
+                <?php while ($related = $stmt_related->fetch(PDO::FETCH_ASSOC)): ?>
                     <div class="product-card group cursor-pointer border p-4 rounded-lg hover:shadow-lg transition">
                         <div class="overflow-hidden rounded-lg mb-4 relative">
                             <a href="chitiet.php?id=<?php echo $related['sanpham_id']; ?>">
-                                <img src="<?php echo htmlspecialchars($related['hinhAnh']); ?>"
-                                    alt="<?php echo htmlspecialchars($related['ten']); ?>"
-                                    class="w-full h-64 object-cover transform group-hover:scale-105 transition duration-500">
+                                <img src="<?php echo htmlspecialchars($related['hinhAnh']); ?>" alt="<?php echo htmlspecialchars($related['ten']); ?>" class="w-full h-64 object-cover transform group-hover:scale-105 transition duration-500">
                             </a>
-
                             <div class="absolute bottom-0 left-0 right-0 p-4 translate-y-full group-hover:translate-y-0 transition duration-300 bg-white/95 backdrop-blur border-t">
                                 <div class="flex gap-2">
-                                    <button type="button"
-                                        onclick="openModal(
-                                            <?php echo $related['sanpham_id']; ?>, 
-                                            '<?php echo addslashes($related['ten']); ?>', 
-                                            <?php echo $related['gia']; ?>, 
-                                            '<?php echo $related['hinhAnh']; ?>'
-                                        )"
-                                        class="flex-1 bg-black text-white py-2 font-bold hover:bg-red-600 transition text-xs">
-                                        THÊM GIỎ
-                                    </button>
-
-                                    <button class="w-10 h-10 border border-black flex items-center justify-center hover:bg-red-500 hover:text-white hover:border-red-500 transition"
-                                        onclick="addToWishlist(<?php echo $related['sanpham_id']; ?>, '<?php echo addslashes($related['ten']); ?>')"
-                                        title="Thêm vào yêu thích">
-                                        ❤️
-                                    </button>
+                                    <button type="button" onclick="openModal(<?php echo $related['sanpham_id']; ?>, '<?php echo addslashes($related['ten']); ?>', <?php echo $related['gia']; ?>, '<?php echo $related['hinhAnh']; ?>', <?php echo $related['soLuongTon']; ?>)" class="flex-1 bg-black text-white py-2 font-bold hover:bg-red-600 transition text-xs">THÊM GIỎ</button>
+                                    <button class="w-10 h-10 border border-black flex items-center justify-center hover:bg-red-500 hover:text-white hover:border-red-500 transition" onclick="addToWishlist(<?php echo $related['sanpham_id']; ?>, '<?php echo addslashes($related['ten']); ?>')" title="Thêm vào yêu thích">❤️</button>
                                 </div>
                             </div>
                         </div>
-
                         <div class="text-center">
                             <h3 class="font-bold text-sm mb-1 truncate">
-                                <a href="chitiet.php?id=<?php echo $related['sanpham_id']; ?>">
-                                    <?php echo htmlspecialchars($related['ten']); ?>
-                                </a>
+                                <a href="chitiet.php?id=<?php echo $related['sanpham_id']; ?>"><?php echo htmlspecialchars($related['ten']); ?></a>
                             </h3>
                             <div class="text-red-600 font-bold"><?php echo number_format($related['gia'], 0, ',', '.'); ?>₫</div>
                         </div>
@@ -225,12 +183,11 @@ include './includes/header.php';
             </div>
         </div>
     <?php endif; ?>
-
 </div>
 
 <div id="quickViewModal" class="fixed inset-0 z-50 hidden">
     <div class="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity" onclick="closeModal()"></div>
-    <div class="relative bg-white w-full max-w-4xl mx-auto mt-20 p-6 rounded-lg shadow-2xl animate-fade-in-up flex flex-col md:flex-row gap-8 mt-[300px]">
+    <div class="relative bg-white w-full max-w-4xl mx-auto mt-20 p-6 rounded-lg shadow-2xl animate-fade-in-up flex flex-col md:flex-row gap-8">
         <button onclick="closeModal()" class="absolute top-4 right-4 text-gray-400 hover:text-black text-2xl font-bold">&times;</button>
         <div class="w-full md:w-1/2 bg-gray-100 rounded-lg overflow-hidden flex items-center justify-center">
             <img id="modalImg" src="" class="max-h-[400px] object-contain">
@@ -240,10 +197,11 @@ include './includes/header.php';
                 <h2 id="modalName" class="text-2xl font-bold mb-2 uppercase"></h2>
                 <div class="flex items-center gap-4 mb-4">
                     <span id="modalPrice" class="text-3xl text-red-600 font-bold"></span>
-                    <span class="text-sm text-green-600 bg-green-100 px-2 py-1 rounded">Còn hàng</span>
+                    <span id="modalStockLabel"></span>
                 </div>
                 <hr class="border-gray-200 my-4">
-                <form action="them-gio-hang.php" method="POST">
+
+                <form id="modalBuyForm" action="them-gio-hang.php" method="POST">
                     <input type="hidden" name="sanpham_id" id="modalId">
                     <div class="mb-6">
                         <label class="block font-bold mb-2 text-sm">Kích thước:</label>
@@ -272,6 +230,10 @@ include './includes/header.php';
                     </div>
                     <button type="submit" name="add_to_cart" class="w-full bg-red-600 text-white font-bold py-3 rounded hover:bg-red-700 transition uppercase">THÊM VÀO GIỎ NGAY</button>
                 </form>
+
+                <div id="modalOutOfStockMsg" class="hidden bg-gray-100 p-4 rounded text-center border border-gray-200">
+                    <p class="text-red-500 font-bold mb-1">❌ Sản phẩm tạm thời hết hàng</p>
+                </div>
             </div>
             <div class="mt-6 pt-4 border-t border-gray-100 text-sm flex justify-end">
                 <a id="modalLink" href="#" class="text-gray-500 hover:text-black hover:underline flex items-center gap-1 group">Xem chi tiết sản phẩm <span class="group-hover:translate-x-1 transition-transform">»</span></a>
