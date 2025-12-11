@@ -2,7 +2,7 @@
 session_start();
 include 'config/database.php';
 
-// 1. Kiểm tra đăng nhập
+
 if (!isset($_SESSION['user_id'])) {
     header("Location: dangnhap.php");
     exit();
@@ -10,18 +10,18 @@ if (!isset($_SESSION['user_id'])) {
 
 $user_id = $_SESSION['user_id'];
 
-// Xử lý đăng xuất (Nếu có link logout ở trang này)
+
 if (isset($_GET['logout'])) {
     session_destroy();
     header("Location: dangnhap.php");
     exit();
 }
 
-// 2. Xử lý XÓA sản phẩm khỏi giỏ (PDO)
+
 if (isset($_GET['delete'])) {
     $cart_id = intval($_GET['delete']);
 
-    // Dùng PDO Prepared Statement để xóa
+
     $sql_delete = "DELETE FROM GIO_HANG WHERE giohang_id = ? AND nguoi_id = ?";
     $stmt_delete = $conn->prepare($sql_delete);
 
@@ -37,11 +37,10 @@ if (isset($_GET['delete'])) {
         ];
     }
 
-    header("Location: giohang.php"); // Load lại trang
+    header("Location: giohang.php"); 
     exit();
 }
 
-// 3. Lấy danh sách sản phẩm trong giỏ (PDO)
 $sql = "SELECT gh.*, sp.ten, sp.gia, sp.hinhAnh 
         FROM GIO_HANG gh
         JOIN SAN_PHAM sp ON gh.sanpham_id = sp.sanpham_id
@@ -51,7 +50,7 @@ $sql = "SELECT gh.*, sp.ten, sp.gia, sp.hinhAnh
 $stmt = $conn->prepare($sql);
 $stmt->execute([$user_id]);
 
-// Biến tính tổng tiền
+
 $total_money = 0;
 
 include './includes/header.php';

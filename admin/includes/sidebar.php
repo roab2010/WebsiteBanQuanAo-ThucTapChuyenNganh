@@ -18,12 +18,12 @@ function activeClass($page, $current)
     }
 }
 
-// 3. Tính số đơn hàng mới (Chuyển sang PDO)
+
 $new_orders_count = 0;
 if (isset($conn)) {
     $sql_count = "SELECT COUNT(*) as c FROM DON_HANG WHERE trangThaiDH = 'Cho xu ly'";
 
-    // Dùng query() của PDO
+    
     $stmt = $conn->query($sql_count);
 
     if ($stmt) {
@@ -65,6 +65,10 @@ if (isset($conn)) {
 
         <a href="khachhang.php" class="block py-3 px-6 <?php echo activeClass('khachhang.php', $current_page); ?>">
             <i class="fas fa-users mr-3 w-6 text-center"></i> Khách hàng
+        </a>
+        <a href="danhgia.php" class="flex items-center px-6 py-3 text-gray-400 hover:bg-gray-700 hover:text-white transition-colors duration-200 <?php echo (basename($_SERVER['PHP_SELF']) == 'danhgia.php') ? 'bg-gray-700 text-white border-l-4 border-blue-500' : ''; ?>">
+            <i class="fas fa-star mr-3 w-5 text-center"></i>
+            <span class="font-medium">Đánh giá</span>
         </a>
     </nav>
 

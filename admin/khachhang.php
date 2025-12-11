@@ -1,18 +1,18 @@
 <?php
-// BẬT BÁO LỖI (Để biết tại sao không hiện)
+
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
 session_start();
 
-// Kiểm tra đường dẫn file config
+
 if (!file_exists('../config/database.php')) {
     die("<h1 style='color:red'>LỖI: Không tìm thấy file config/database.php</h1>");
 }
 include '../config/database.php';
 
-// Kiểm tra xem $conn có phải là PDO không (Quan trọng!)
+
 if (!($conn instanceof PDO)) {
     die("<h1 style='color:red'>LỖI NGHIÊM TRỌNG: File config/database.php chưa chuyển sang PDO! Hãy sửa file config trước.</h1>");
 }
@@ -26,7 +26,7 @@ $customers = [];
 $error_msg = "";
 
 try {
-    // Thử lấy danh sách khách hàng
+   
     $sql = "SELECT * FROM NGUOI_DUNG ORDER BY nguoi_id DESC";
     $stmt = $conn->query($sql);
 
@@ -36,7 +36,7 @@ try {
         $error_msg = "Kết nối OK nhưng chưa có khách hàng nào.";
     }
 } catch (PDOException $e) {
-    // Nếu lỗi (thường là sai tên bảng)
+
     $error_msg = "❌ LỖI SQL: " . $e->getMessage() . "<br>Gợi ý: Kiểm tra lại tên bảng trong Database xem là 'NGUOI_DUNG' hay 'nguoi_dung'?";
 }
 ?>

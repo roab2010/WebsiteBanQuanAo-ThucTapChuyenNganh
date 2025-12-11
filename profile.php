@@ -2,7 +2,7 @@
 session_start();
 include 'config/database.php';
 
-// 1. Kiểm tra đăng nhập
+
 if (!isset($_SESSION['user_id'])) {
     header("Location: dangnhap.php");
     exit();
@@ -10,29 +10,29 @@ if (!isset($_SESSION['user_id'])) {
 
 $user_id = $_SESSION['user_id'];
 
-// --- PHẦN XỬ LÝ CẬP NHẬT THÔNG TIN (POST) ---
+
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    // Lấy dữ liệu (PDO tự động làm sạch, không cần escape string)
+   
     $ten = $_POST['ten'];
     $sdt = $_POST['sdt'];
     $diaChi = $_POST['diaChi'];
 
-    // Validate cơ bản
+
     if (empty($ten)) {
         $_SESSION['alert'] = ['type' => 'error', 'message' => 'Tên hiển thị không được để trống!'];
     } else {
         try {
-            // Cập nhật vào Database (PDO Prepared Statement)
+         
             $sql_update = "UPDATE NGUOI_DUNG SET ten = ?, sdt = ?, diaChi = ? WHERE nguoi_id = ?";
             $stmt_update = $conn->prepare($sql_update);
 
             if ($stmt_update->execute([$ten, $sdt, $diaChi, $user_id])) {
-                // Cập nhật lại Session tên người dùng
+     
                 $_SESSION['user'] = $ten;
 
                 $_SESSION['alert'] = ['type' => 'success', 'message' => 'Cập nhật hồ sơ thành công!'];
 
-                // Refresh lại trang
+              
                 header("Location: profile.php");
                 exit();
             }
@@ -42,7 +42,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     }
 }
 
-// 2. Lấy thông tin người dùng hiện tại (PDO)
+
 $stmt_user = $conn->prepare("SELECT * FROM NGUOI_DUNG WHERE nguoi_id = ?");
 $stmt_user->execute([$user_id]);
 $user_info = $stmt_user->fetch(PDO::FETCH_ASSOC);

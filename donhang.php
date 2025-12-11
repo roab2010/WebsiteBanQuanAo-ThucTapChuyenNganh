@@ -2,7 +2,7 @@
 session_start();
 include 'config/database.php';
 
-// 1. Kiểm tra đăng nhập
+
 if (!isset($_SESSION['user_id'])) {
     header("Location: dangnhap.php");
     exit();
@@ -10,8 +10,7 @@ if (!isset($_SESSION['user_id'])) {
 
 $user_id = $_SESSION['user_id'];
 
-// 2. Lấy danh sách đơn hàng (PDO)
-// Dùng prepare để an toàn hơn
+
 $sql_orders = "SELECT * FROM DON_HANG WHERE nguoi_id = ? ORDER BY donhang_id DESC";
 $stmt_orders = $conn->prepare($sql_orders);
 $stmt_orders->execute([$user_id]);
@@ -27,23 +26,23 @@ include './includes/header.php';
             <?php while ($order = $stmt_orders->fetch(PDO::FETCH_ASSOC)):
                 $donhang_id = $order['donhang_id'];
 
-                // --- Xử lý màu sắc trạng thái ---
+         
                 $status_color = 'bg-gray-100 text-gray-800';
                 if ($order['trangThaiDH'] == 'Dang giao') $status_color = 'bg-blue-100 text-blue-800';
                 if ($order['trangThaiDH'] == 'Hoan tat') $status_color = 'bg-green-100 text-green-800';
                 if ($order['trangThaiDH'] == 'Huy') $status_color = 'bg-red-100 text-red-800';
 
-                // --- Xử lý Logic Thanh Toán ($is_paid) ---
+             
                 $is_paid = false;
                 $tt_tt = trim($order['trangThaiTT']);
                 $pt_tt = trim($order['phuongThucTT']);
                 $tt_dh = trim($order['trangThaiDH']);
 
-                // 1. Nếu database ghi đã thanh toán (MoMo/Banking)
+          
                 if (stripos($tt_tt, 'Da thanh toan') !== false) {
                     $is_paid = true;
                 }
-                // 2. HOẶC: Nếu là COD mà đơn đã HOÀN TẤT
+             
                 if ($pt_tt == 'COD' && $tt_dh == 'Hoan tat') {
                     $is_paid = true;
                 }
@@ -76,14 +75,14 @@ include './includes/header.php';
 
                     <div class="p-4">
                         <?php
-                        // Lấy chi tiết sản phẩm (PDO)
+                    
                         $sql_items = "SELECT ct.*, sp.ten, sp.hinhAnh 
                                       FROM CHI_TIET_DON_HANG ct 
                                       JOIN SAN_PHAM sp ON ct.sanpham_id = sp.sanpham_id 
-                                      WHERE ct.donhang_id = ?"; // Dùng dấu ?
+                                      WHERE ct.donhang_id = ?"; 
 
                         $stmt_items = $conn->prepare($sql_items);
-                        $stmt_items->execute([$donhang_id]); // Truyền ID vào
+                        $stmt_items->execute([$donhang_id]); 
 
                         while ($item = $stmt_items->fetch(PDO::FETCH_ASSOC)):
                         ?>

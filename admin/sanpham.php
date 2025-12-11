@@ -1,5 +1,5 @@
 <?php
-// BẬT CHẾ ĐỘ BÁO LỖI (Để xem nó chết ở đâu)
+
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
@@ -12,7 +12,7 @@ if (!isset($_SESSION['admin_id'])) {
     exit();
 }
 
-// XỬ LÝ XÓA
+
 if (isset($_GET['delete'])) {
     $id = intval($_GET['delete']);
     try {
@@ -35,29 +35,29 @@ if (isset($_GET['delete'])) {
     exit();
 }
 
-// --- PHẦN QUAN TRỌNG: LẤY DỮ LIỆU ---
+
 $products = [];
 $error_msg = "";
 
 try {
-    // Thử truy vấn bảng SAN_PHAM (Viết hoa)
+
     $sql = "SELECT sp.*, dm.ten as ten_danhmuc 
             FROM SAN_PHAM sp 
             LEFT JOIN DANH_MUC dm ON sp.danhmuc_id = dm.danhmuc_id 
             ORDER BY sp.sanpham_id DESC";
     $stmt = $conn->query($sql);
 
-    // Đếm số dòng
+
     $count = $stmt->rowCount();
 
     if ($count > 0) {
-        // Lấy tất cả dữ liệu
+
         $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
     } else {
         $error_msg = "Kết nối thành công nhưng bảng SAN_PHAM đang TRỐNG (0 dòng).";
     }
 } catch (PDOException $e) {
-    // Nếu lỗi (ví dụ sai tên bảng), in ra ngay
+  
     $error_msg = "LỖI TRUY VẤN SQL: " . $e->getMessage();
 }
 ?>

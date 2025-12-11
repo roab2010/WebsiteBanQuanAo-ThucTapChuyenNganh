@@ -26,12 +26,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $_SESSION['alert'] = ['type' => 'error', 'message' => 'Lỗi hệ thống: ' . $e->getMessage()];
     }
 
-    // Chuyển hướng về trang danh sách
+ 
     header("Location: donhang.php");
     exit();
 }
 
-// Lấy thông tin đơn hàng (PDO)
+
 $stmt_order = $conn->prepare("SELECT * FROM DON_HANG WHERE donhang_id = ?");
 $stmt_order->execute([$id]);
 $order = $stmt_order->fetch(PDO::FETCH_ASSOC);
@@ -41,7 +41,7 @@ if (!$order) {
     exit();
 }
 
-// Lấy chi tiết sản phẩm (PDO)
+
 $sql_items = "SELECT ct.*, sp.ten, sp.hinhAnh 
               FROM CHI_TIET_DON_HANG ct 
               JOIN SAN_PHAM sp ON ct.sanpham_id = sp.sanpham_id 
@@ -49,7 +49,6 @@ $sql_items = "SELECT ct.*, sp.ten, sp.hinhAnh
 $stmt_items = $conn->prepare($sql_items);
 $stmt_items->execute([$id]);
 
-// Logic kiểm tra thanh toán
 $pt_tt = trim($order['phuongThucTT']);
 $tt_dh = trim($order['trangThaiDH']);
 $tt_tt = trim($order['trangThaiTT']);

@@ -2,14 +2,14 @@
 session_start();
 include 'config/database.php';
 
-// 1. Lấy ID và làm sạch dữ liệu
+
 $id = isset($_GET['id']) ? intval($_GET['id']) : 0;
 
 if ($id <= 0) {
     die("Sản phẩm không hợp lệ!");
 }
 
-// 2. Lấy thông tin sản phẩm (PDO)
+
 $stmt = $conn->prepare("SELECT * FROM SAN_PHAM WHERE sanpham_id = ?");
 $stmt->execute([$id]);
 $product = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -18,7 +18,7 @@ if (!$product) {
     die("Sản phẩm không tồn tại!");
 }
 
-// 3. Lấy ĐÁNH GIÁ (PDO)
+
 $sql_reviews = "SELECT dg.*, nd.ten as ten_nguoi_dung 
                 FROM DANH_GIA dg 
                 JOIN NGUOI_DUNG nd ON dg.nguoi_id = nd.nguoi_id 
@@ -26,9 +26,9 @@ $sql_reviews = "SELECT dg.*, nd.ten as ten_nguoi_dung
                 ORDER BY dg.ngayTao DESC";
 $stmt_reviews = $conn->prepare($sql_reviews);
 $stmt_reviews->execute([$id]);
-$total_reviews = $stmt_reviews->rowCount(); // Đếm số dòng bằng PDO
+$total_reviews = $stmt_reviews->rowCount(); 
 
-// 4. Lấy Sản phẩm liên quan (PDO)
+
 $cat_id = $product['danhmuc_id'];
 $sql_related = "SELECT * FROM SAN_PHAM WHERE danhmuc_id = ? AND sanpham_id != ? LIMIT 4";
 $stmt_related = $conn->prepare($sql_related);

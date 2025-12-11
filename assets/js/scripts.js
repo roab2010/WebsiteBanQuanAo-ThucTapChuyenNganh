@@ -1,8 +1,4 @@
-/* assets/js/scripts.js */
 
-// ==============================================
-// 1. CHỨC NĂNG YÊU THÍCH (Lưu vào LocalStorage)
-// ==============================================
 function addToWishlist(productId, productName) {
 
   let wishlist = JSON.parse(localStorage.getItem('myWishlist')) || [];
@@ -23,39 +19,20 @@ function addToWishlist(productId, productName) {
   }
 }
 
-// ==============================================
-// 2. CHỨC NĂNG THÊM GIỎ HÀNG
-// ==============================================
 function addToCart(productId, productName) {
-  // Vì database mới yêu cầu SIZE, nên tạm thời mình thông báo chọn size
-  // Sau này khi làm trang chi tiết sản phẩm có chọn size, ta sẽ xử lý code này sau.
 
-  /* Logic sắp tới sẽ làm:
-     1. Kiểm tra user đã đăng nhập chưa?
-     2. Lấy size khách chọn.
-     3. Gửi Ajax về server PHP để lưu vào Database.
-  */
 
-  // Tạm thời hiện thông báo cho vui để biết nút bấm ăn
   alert(`Bạn vừa bấm thêm "${productName}" vào giỏ (ID: ${productId}).\nChức năng này sẽ hoàn thiện ở bước tiếp theo! 🛒`);
 }
 
-// ==============================================
-// 3. CHỨC NĂNG XEM THÊM (Load More)
-// ==============================================
+
 function loadMore() {
   alert("Tính năng đang phát triển... Bạn hãy đợi nhé!");
 }
 
-// ==============================================
-// 4. HIỆU ỨNG ALERT ĐẸP (Thay cho alert mặc định xấu xí - Tùy chọn)
-// ==============================================
-// Bạn có thể để trống phần này nếu thích dùng alert mặc định của trình duyệt
 
-
-// 1. Hàm mở Modal
 function openModal(id, name, price, image, stock) {
-  // 1. Điền thông tin cơ bản
+
   document.getElementById('modalId').value = id;
   document.getElementById('modalImg').src = image;
   document.getElementById('modalName').innerText = name;
@@ -65,40 +42,38 @@ function openModal(id, name, price, image, stock) {
   document.getElementById('modalLink').href = 'chitiet.php?id=' + id;
   document.getElementById('modalQty').value = 1;
 
-  // 2. XỬ LÝ LOGIC TỒN KHO (Mới thêm)
+
   const stockLabel = document.getElementById('modalStockLabel');
-  const buyForm = document.getElementById('modalBuyForm'); // Form mua hàng
-  const outOfStockMsg = document.getElementById('modalOutOfStockMsg'); // Thông báo hết hàng
+  const buyForm = document.getElementById('modalBuyForm'); 
+  const outOfStockMsg = document.getElementById('modalOutOfStockMsg'); 
 
   if (stock > 0) {
-    // CÒN HÀNG:
-    // Hiện chữ "Còn hàng" màu xanh
+
     stockLabel.innerHTML = `<span class="text-sm text-green-600 bg-green-100 px-2 py-1 rounded">Còn ${stock} sản phẩm</span>`;
-    // Hiện Form mua, Ẩn thông báo hết hàng
+
     buyForm.classList.remove('hidden');
     outOfStockMsg.classList.add('hidden');
 
-    // Cập nhật số lượng max trong input
+
     document.getElementById('modalQty').setAttribute('max', stock);
   } else {
-    // HẾT HÀNG:
-    // Hiện chữ "Hết hàng" màu đỏ
+  
     stockLabel.innerHTML = `<span class="text-sm text-red-600 bg-red-100 px-2 py-1 rounded">HẾT HÀNG</span>`;
-    // Ẩn Form mua, Hiện thông báo hết hàng
+   
     buyForm.classList.add('hidden');
     outOfStockMsg.classList.remove('hidden');
   }
 
-  // 3. Hiện Modal
+
   document.getElementById('quickViewModal').classList.remove('hidden');
 }
 
-// 2. Hàm đóng Modal
+
 function closeModal() {
   document.getElementById('quickViewModal').classList.add('hidden');
 }
 
-// 3. Hàm tăng giảm số lượng (+/-)
+
 function updateQty(change) {
   let qtyInput = document.getElementById('modalQty');
   let currentQty = parseInt(qtyInput.value);
@@ -113,11 +88,11 @@ function updateQty(change) {
 function showToast(message, type = 'success') {
   const container = document.getElementById('toast-container');
 
-  // Tạo phần tử div
+
   const toast = document.createElement('div');
   toast.classList.add('toast', type);
 
-  // Chọn icon dựa trên loại
+
   let icon = '✅';
   if (type === 'error') icon = '❌';
   if (type === 'warning') icon = '⚠️';
@@ -127,10 +102,10 @@ function showToast(message, type = 'success') {
         <div class="toast-message">${message}</div>
     `;
 
-  // Thêm vào container
+
   container.appendChild(toast);
 
-  // Tự động xóa khỏi DOM sau 3.5s (để khớp với animation fadeOut)
+
   setTimeout(() => {
     toast.remove();
   }, 3500);
@@ -138,16 +113,14 @@ function showToast(message, type = 'success') {
 
 
 
-// Xóa yêu thích 
-function removeFromWishlistPage(id, btn) {
-  // BỎ ĐOẠN NÀY ĐI: if(!confirm('Bỏ sản phẩm này...?')) return;
 
-  // Xóa trong LocalStorage
+function removeFromWishlistPage(id, btn) {
+
+
   let wishlist = JSON.parse(localStorage.getItem('myWishlist')) || [];
   wishlist = wishlist.filter(item => item.id !== id);
   localStorage.setItem('myWishlist', JSON.stringify(wishlist));
 
-  // Xóa giao diện (Hiệu ứng mờ dần)
   const card = btn.closest('.product-card');
   card.style.transition = "all 0.3s ease";
   card.style.opacity = '0';
@@ -155,13 +128,13 @@ function removeFromWishlistPage(id, btn) {
 
   setTimeout(() => {
     card.remove();
-    // Kiểm tra nếu hết sản phẩm thì hiện thông báo trống
+
     if (document.querySelectorAll('#wishlist-grid .product-card').length === 0) {
       document.getElementById('wishlist-grid').innerHTML = '<div class="text-center col-span-full py-10"><p class="text-gray-500 text-lg">Bạn chưa yêu thích sản phẩm nào.</p></div>';
     }
   }, 300);
 
-  // Dùng Toast đẹp thay cho alert
+
   showToast('Đã xóa sản phẩm khỏi danh sách yêu thích', 'success');
 }
 

@@ -16,7 +16,7 @@ $moTa = '';
 $hinhAnh = '';
 $is_edit = false;
 
-// NẾU CÓ ID TRÊN URL -> LÀ CHẾ ĐỘ SỬA (PDO)
+
 if (isset($_GET['id'])) {
     $id = intval($_GET['id']);
 
@@ -35,10 +35,10 @@ if (isset($_GET['id'])) {
     }
 }
 
-// LẤY DANH SÁCH DANH MỤC (PDO)
+
 $categories = $conn->query("SELECT * FROM DANH_MUC");
 
-// --- XỬ LÝ KHI BẤM LƯU (POST) ---
+
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $ten = $_POST['ten'];
     $gia = $_POST['gia'];
@@ -46,7 +46,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $soLuongTon = $_POST['soLuongTon'];
     $moTa = $_POST['moTa'];
 
-    // Xử lý Upload ảnh
     $target_dir = "../assets/img/";
     $db_path = $hinhAnh;
 
@@ -61,14 +60,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
     try {
         if ($is_edit) {
-            // UPDATE (PDO)
+       
             $sql = "UPDATE SAN_PHAM SET 
                     ten = ?, gia = ?, danhmuc_id = ?, soLuongTon = ?, moTa = ?, hinhAnh = ? 
                     WHERE sanpham_id = ?";
             $stmt = $conn->prepare($sql);
             $stmt->execute([$ten, $gia, $danhmuc_id, $soLuongTon, $moTa, $db_path, $id]);
         } else {
-            // INSERT (PDO)
+      
             $sql = "INSERT INTO SAN_PHAM (ten, gia, danhmuc_id, soLuongTon, moTa, hinhAnh) 
                     VALUES (?, ?, ?, ?, ?, ?)";
             $stmt = $conn->prepare($sql);

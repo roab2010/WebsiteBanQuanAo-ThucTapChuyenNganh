@@ -8,7 +8,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
   $email = $_POST['email'];
   $password = $_POST['password'];
 
-  // 1. Tìm user trong DB (PDO)
+
   $sql = "SELECT * FROM NGUOI_DUNG WHERE email = ?";
   $stmt = $conn->prepare($sql);
   $stmt->execute([$email]);
@@ -16,18 +16,18 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
   if ($stmt->rowCount() == 1) {
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    // 2. Kiểm tra mật khẩu (So khớp Hash)
+ 
     if (password_verify($password, $user['matKhau'])) {
-      // Lưu Session
+ 
       $_SESSION['user_id'] = $user['nguoi_id'];
       $_SESSION['user'] = $user['ten'];
       $_SESSION['user_email'] = $user['email'];
       $_SESSION['login_time'] = time();
 
-      // GÁN THÔNG BÁO THÀNH CÔNG
+    
       $_SESSION['alert'] = ['type' => 'success', 'message' => 'Đăng nhập thành công. Chào mừng ' . $user['ten'] . '!'];
 
-      // Chuyển về trang chủ
+    
       header("Location: index.php");
       exit();
     } else {

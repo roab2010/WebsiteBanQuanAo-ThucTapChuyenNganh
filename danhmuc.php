@@ -2,7 +2,7 @@
 session_start();
 include 'config/database.php';
 
-// 1. Lấy ID danh mục từ URL
+
 $id = isset($_GET['id']) ? intval($_GET['id']) : 0;
 
 if ($id <= 0) {
@@ -10,7 +10,7 @@ if ($id <= 0) {
     exit();
 }
 
-// 2. Lấy thông tin Danh mục (PDO)
+
 $stmt_cat = $conn->prepare("SELECT * FROM DANH_MUC WHERE danhmuc_id = ?");
 $stmt_cat->execute([$id]);
 $category = $stmt_cat->fetch(PDO::FETCH_ASSOC);
@@ -19,7 +19,7 @@ if (!$category) {
     die("Danh mục không tồn tại!");
 }
 
-// 3. Lấy sản phẩm thuộc danh mục này (PDO)
+
 $stmt_products = $conn->prepare("SELECT * FROM SAN_PHAM WHERE danhmuc_id = ? ORDER BY sanpham_id DESC");
 $stmt_products->execute([$id]);
 

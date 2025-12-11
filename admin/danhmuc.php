@@ -1,5 +1,5 @@
 <?php
-// 1. BẬT BÁO LỖI (Để biết tại sao không hiện)
+
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
@@ -7,17 +7,17 @@ error_reporting(E_ALL);
 session_start();
 include '../config/database.php';
 
-// Kiểm tra đăng nhập
+
 if (!isset($_SESSION['admin_id'])) {
     header("Location: login.php");
     exit();
 }
 
-// --- XỬ LÝ XÓA ---
+
 if (isset($_GET['delete'])) {
     $id = intval($_GET['delete']);
     try {
-        // Kiểm tra ràng buộc
+   
         $check_stmt = $conn->prepare("SELECT sanpham_id FROM SAN_PHAM WHERE danhmuc_id = ?");
         $check_stmt->execute([$id]);
 
@@ -38,16 +38,16 @@ if (isset($_GET['delete'])) {
     exit();
 }
 
-// --- LẤY DỮ LIỆU & KIỂM TRA LỖI ---
+
 $categories = [];
 $error_msg = "";
 
 try {
-    // Truy vấn
+
     $sql = "SELECT * FROM DANH_MUC ORDER BY danhmuc_id ASC";
     $stmt = $conn->query($sql);
 
-    // Kiểm tra xem query có chạy được không
+
     if ($stmt) {
         if ($stmt->rowCount() > 0) {
             $categories = $stmt->fetchAll(PDO::FETCH_ASSOC);

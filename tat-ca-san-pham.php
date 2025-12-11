@@ -3,16 +3,14 @@ session_start();
 include 'config/database.php';
 
 $user = $_SESSION['user'] ?? null;
-// $cart_count đã được xử lý trong header.php nên không cần khai báo lại ở đây
 
-// Lấy TOÀN BỘ sản phẩm (PDO)
 $products_by_category = [];
 $sql_all = "SELECT sp.*, dm.ten as ten_danhmuc 
             FROM SAN_PHAM sp 
             INNER JOIN DANH_MUC dm ON sp.danhmuc_id = dm.danhmuc_id 
             ORDER BY sp.sanpham_id DESC";
 
-// Dùng query() vì không có tham số
+
 $stmt_all = $conn->query($sql_all);
 
 if ($stmt_all) {

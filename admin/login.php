@@ -1,30 +1,30 @@
 <?php
 session_start();
-// Lưu ý đường dẫn: Phải đi ra ngoài 1 cấp (../) mới thấy config
+
 include '../config/database.php';
 
 $error = '';
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $email = $_POST['email']; // PDO tự xử lý bảo mật, không cần escape tay
+    $email = $_POST['email']; 
     $password = $_POST['password'];
 
-    // Tìm trong bảng ADMIN (PDO Prepared Statement)
+  
     $sql = "SELECT * FROM ADMIN WHERE email = ?";
     $stmt = $conn->prepare($sql);
     $stmt->execute([$email]);
 
-    // Kiểm tra có dòng nào trả về không
+
     if ($stmt->rowCount() == 1) {
         $admin = $stmt->fetch(PDO::FETCH_ASSOC);
 
         if (password_verify($password, $admin['matKhau'])) {
-            // Lưu Session đặc biệt cho Admin
+       
             $_SESSION['admin_id'] = $admin['admin_id'];
             $_SESSION['admin_name'] = $admin['ten'];
             $_SESSION['admin_role'] = $admin['vaiTro'];
 
-            header("Location: index.php"); // Chuyển vào Dashboard
+            header("Location: index.php"); 
             exit();
         } else {
             $error = "Sai mật khẩu Admin!";

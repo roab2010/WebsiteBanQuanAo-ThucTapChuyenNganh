@@ -1,6 +1,5 @@
 <?php
-// config-js.php
-// KHÔNG có session_start() ở đây
+
 
 $site_config = [
     'name' => '3 chàng lính ngự lâm',

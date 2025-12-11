@@ -6,41 +6,41 @@ $error = '';
 $success = '';
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    // Lấy dữ liệu (Không cần escape string nữa vì PDO tự lo)
+
     $ten = $_POST['ten'];
     $email = $_POST['email'];
     $password = $_POST['password'];
     $confirm_password = $_POST['confirm_password'];
 
-    // 1. Validate cơ bản
+
     if ($password !== $confirm_password) {
         $error = "Mật khẩu nhập lại không khớp!";
     } else {
-        // 2. Kiểm tra email (PDO)
+      
         $check_stmt = $conn->prepare("SELECT * FROM NGUOI_DUNG WHERE email = ?");
         $check_stmt->execute([$email]);
 
         if ($check_stmt->rowCount() > 0) {
             $error = "Email này đã được sử dụng, vui lòng chọn email khác!";
         } else {
-            // 3. Mã hóa mật khẩu
+     
             $hashed_password = password_hash($password, PASSWORD_DEFAULT);
 
-            // 4. Thêm vào Database (PDO)
+          
             try {
                 $sql = "INSERT INTO NGUOI_DUNG (ten, email, matKhau) VALUES (?, ?, ?)";
                 $stmt = $conn->prepare($sql);
 
                 if ($stmt->execute([$ten, $email, $hashed_password])) {
-                    // Gán thông báo thành công
+                    
                     $_SESSION['alert'] = ['type' => 'success', 'message' => 'Đăng ký thành công! Vui lòng đăng nhập.'];
 
-                    // Chuyển hướng NGAY LẬP TỨC sang trang đăng nhập
+                   
                     header("Location: dangnhap.php");
                     exit();
                 }
             } catch (PDOException $e) {
-                // Bắt lỗi nếu có
+              
                 $error = "Lỗi hệ thống: " . $e->getMessage();
             }
         }

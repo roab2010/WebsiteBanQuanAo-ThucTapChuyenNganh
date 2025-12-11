@@ -6,7 +6,7 @@ error_reporting(E_ALL);
 session_start();
 include '../config/database.php';
 
-// Kiểm tra kết nối PDO
+
 if (!($conn instanceof PDO)) {
     die("<h1 style='color:red'>LỖI: File config/database.php chưa phải là PDO!</h1>");
 }
@@ -20,7 +20,7 @@ $orders = [];
 $error_msg = "";
 
 try {
-    // Lấy đơn hàng
+
     $sql = "SELECT * FROM DON_HANG ORDER BY donhang_id DESC";
     $stmt = $conn->query($sql);
 

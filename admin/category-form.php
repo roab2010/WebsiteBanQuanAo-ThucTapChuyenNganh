@@ -13,7 +13,7 @@ $moTa = '';
 $anh = '';
 $is_edit = false;
 
-// Chế độ SỬA (PDO)
+
 if (isset($_GET['id'])) {
     $id = intval($_GET['id']);
 
@@ -29,12 +29,12 @@ if (isset($_GET['id'])) {
     }
 }
 
-// XỬ LÝ POST (PDO)
+
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $ten = $_POST['ten'];
     $moTa = $_POST['moTa'];
 
-    // Upload ảnh
+  
     $db_path = $anh;
     if (!empty($_FILES["anh"]["name"])) {
         $target_dir = "../assets/img/";

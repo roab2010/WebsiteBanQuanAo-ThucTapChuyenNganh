@@ -1,5 +1,5 @@
 <?php
-// quentaikhoan.php - DIRECT FIX
+
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
@@ -15,12 +15,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
         $error_message = "Email không hợp lệ.";
     } else {
-        // Giả lập gửi email reset password
+     
         $success_message = "Hướng dẫn khôi phục mật khẩu đã được gửi đến email: " . htmlspecialchars($email);
     }
 }
 
-// Nếu đã đăng nhập thì redirect về trang chủ
+
 if (isset($_SESSION['user'])) {
     header("Location: index.php");
     exit();

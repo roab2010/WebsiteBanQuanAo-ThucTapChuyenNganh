@@ -1,39 +1,39 @@
 <?php
-// includes/header.php
 
-// 1. KHỞI ĐỘNG SESSION (Dùng file quản lý nếu có)
+
+
 if (file_exists(__DIR__ . '/../session-manager.php')) {
     include __DIR__ . '/../session-manager.php';
 } else {
     if (session_status() === PHP_SESSION_NONE) session_start();
 }
 
-// 2. KẾT NỐI DATABASE (Bắt buộc để đếm giỏ hàng)
+
 require_once __DIR__ . '/../config/database.php';
 
-// 3. ĐỊNH NGHĨA BIẾN CHUNG
-$user = $_SESSION['user'] ?? null;
-$search_query = $search_query ?? ''; // Tránh lỗi undefined ở trang chi tiết
 
-// Xử lý đường dẫn Logo (Giữ nguyên logic của bạn)
+$user = $_SESSION['user'] ?? null;
+$search_query = $search_query ?? ''; 
+
+
 $logo_path = 'assets/img/logonho.png';
 if (!file_exists($logo_path) && file_exists('../' . $logo_path)) {
     $logo_path = '../' . $logo_path;
 }
 
-// 4. ĐẾM SỐ LƯỢNG GIỎ HÀNG (SỬA LẠI THEO PDO)
+
 $cart_count = 0;
 if (isset($_SESSION['user_id'])) {
     $user_id = $_SESSION['user_id'];
 
-    // Dùng PDO Prepared Statement
+    
     $sql_count = "SELECT SUM(soLuong) as total FROM GIO_HANG WHERE nguoi_id = ?";
     $stmt_count = $conn->prepare($sql_count);
     $stmt_count->execute([$user_id]);
 
     $row_count = $stmt_count->fetch(PDO::FETCH_ASSOC);
 
-    // Nếu có kết quả thì lấy, không thì bằng 0
+    
     $cart_count = $row_count['total'] ?? 0;
 }
 ?>
@@ -65,13 +65,13 @@ if (isset($_SESSION['user_id'])) {
                 <span class="separator">|</span>
 
                 <?php
-                // Lấy danh mục từ DB để in ra Menu (SỬA LẠI THEO PDO)
+                
                 $sql_menu = "SELECT * FROM DANH_MUC ORDER BY danhmuc_id ASC";
 
-                // Dùng query() vì không có tham số
+               
                 $stmt_menu = $conn->query($sql_menu);
 
-                // Dùng vòng lặp fetch PDO
+                
                 while ($menu = $stmt_menu->fetch(PDO::FETCH_ASSOC)) {
                 ?>
                     <a href="danhmuc.php?id=<?php echo $menu['danhmuc_id']; ?>" class="nav-link font-bold text-gray-800 hover:text-red-600 transition uppercase text-sm">
@@ -176,7 +176,7 @@ if (isset($_SESSION['user_id'])) {
     <div id="toast-container"></div>
 
     <?php
-    // Nhúng Config JS để truyền biến PHP sang JS
+  
     if (file_exists(__DIR__ . '/../config/config-js.php')) {
         include __DIR__ . '/../config/config-js.php';
     }

@@ -2,26 +2,26 @@
 session_start();
 include 'config/database.php';
 
-// --- PHẦN 1: XỬ LÝ AJAX (PHP nhận ID và trả về HTML sản phẩm - PDO) ---
+
 if (isset($_POST['wishlist_ids'])) {
     $ids_raw = json_decode($_POST['wishlist_ids'], true);
 
-    // Nếu danh sách rỗng
+
     if (empty($ids_raw)) {
         echo '<div class="text-center col-span-full py-10"><p class="text-gray-500">Danh sách yêu thích trống.</p></div>';
         exit;
     }
 
-    // Làm sạch ID (chỉ lấy số)
+
     $ids = array_map('intval', $ids_raw);
 
-    // Tạo chuỗi placeholder (?,?,?) tương ứng số lượng ID để dùng cho PDO
+
     $placeholders = implode(',', array_fill(0, count($ids), '?'));
 
-    // Truy vấn PDO
+  
     $sql = "SELECT * FROM SAN_PHAM WHERE sanpham_id IN ($placeholders)";
     $stmt = $conn->prepare($sql);
-    $stmt->execute($ids); // Truyền mảng ID vào execute
+    $stmt->execute($ids); 
 
     if ($stmt->rowCount() > 0) {
         while ($product = $stmt->fetch(PDO::FETCH_ASSOC)) {
@@ -61,10 +61,10 @@ if (isset($_POST['wishlist_ids'])) {
 <?php
         }
     }
-    exit; // Kết thúc phần xử lý Ajax
+    exit; 
 }
 
-// --- PHẦN 2: GIAO DIỆN CHÍNH CỦA TRANG ---
+
 include './includes/header.php';
 ?>
 
@@ -90,10 +90,10 @@ include './includes/header.php';
     });
 
     function loadWishlistItems() {
-        // 1. Lấy danh sách từ LocalStorage
+  
         const wishlist = JSON.parse(localStorage.getItem('myWishlist')) || [];
 
-        // Lấy ra mảng chỉ chứa ID (Ví dụ: [1, 5, 8])
+ 
         const ids = wishlist.map(item => item.id);
 
         if (ids.length === 0) {
@@ -101,7 +101,7 @@ include './includes/header.php';
             return;
         }
 
-        // 2. Gửi Ajax sang PHP để lấy HTML
+
         const formData = new FormData();
         formData.append('wishlist_ids', JSON.stringify(ids));
 
@@ -111,7 +111,7 @@ include './includes/header.php';
             })
             .then(response => response.text())
             .then(html => {
-                // 3. Hiển thị HTML nhận được
+         
                 document.getElementById('wishlist-grid').innerHTML = html;
             })
             .catch(error => console.error('Error:', error));

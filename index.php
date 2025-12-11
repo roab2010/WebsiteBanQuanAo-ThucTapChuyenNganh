@@ -93,7 +93,7 @@ include './includes/header.php';
       </div>
     <?php endif; ?>
     <div class="relative z-10 px-6 mt-10">
-      <h1 class="text-5xl md:text-6xl font-extrabold mb-4 drop-shadow-lg animate-fade-in-up">Mặc Đi <span class="text-red-500">Sợ *** Gì</span></h1>
+      <h1 class="text-5xl md:text-6xl font-extrabold mb-4 drop-shadow-lg animate-fade-in-up">Mặc Đi <span class="text-red-500">Sợ Gì</span></h1>
       <a href="#store-content" class="mt-8 inline-block px-8 py-3 border border-white text-white font-semibold rounded hover:bg-white hover:text-black transition animate-bounce-slow">VIEW STORE</a>
       <div class="mt-10"><img src="./assets/img/logodatachnen.png" class="mx-auto w-24 md:w-32 drop-shadow-lg"></div>
     </div>

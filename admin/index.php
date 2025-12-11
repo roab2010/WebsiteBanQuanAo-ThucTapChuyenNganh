@@ -2,30 +2,28 @@
 session_start();
 include '../config/database.php';
 
-// BẮT BUỘC: Kiểm tra quyền Admin
+
 if (!isset($_SESSION['admin_id'])) {
     header("Location: login.php");
     exit();
 }
 
-// 1. THỐNG KÊ SỐ LIỆU (PDO)
-// Tổng sản phẩm
+
 $stmt_prod = $conn->query("SELECT COUNT(*) as c FROM SAN_PHAM");
 $total_products = $stmt_prod->fetch(PDO::FETCH_ASSOC)['c'];
 
-// Tổng đơn hàng
 $stmt_ord = $conn->query("SELECT COUNT(*) as c FROM DON_HANG");
 $total_orders = $stmt_ord->fetch(PDO::FETCH_ASSOC)['c'];
 
-// Đơn hàng mới (Chờ xử lý)
+
 $stmt_new = $conn->query("SELECT COUNT(*) as c FROM DON_HANG WHERE trangThaiDH = 'Cho xu ly'");
 $new_orders = $stmt_new->fetch(PDO::FETCH_ASSOC)['c'];
 
-// Tổng khách hàng
+
 $stmt_user = $conn->query("SELECT COUNT(*) as c FROM NGUOI_DUNG");
 $total_users = $stmt_user->fetch(PDO::FETCH_ASSOC)['c'];
 
-// TỔNG DOANH THU
+
 $stmt_rev = $conn->query("SELECT SUM(tongTien) as total FROM DON_HANG WHERE trangThaiDH = 'Hoan tat'");
 $revenue_data = $stmt_rev->fetch(PDO::FETCH_ASSOC);
 $total_revenue = $revenue_data['total'] ?? 0;
@@ -125,7 +123,7 @@ $total_revenue = $revenue_data['total'] ?? 0;
                         </thead>
                         <tbody class="text-sm">
                             <?php
-                            // Lấy 5 đơn hàng mới nhất (PDO)
+                       
                             $sql_recent = "SELECT * FROM DON_HANG ORDER BY donhang_id DESC LIMIT 5";
                             $stmt_recent = $conn->query($sql_recent);
 

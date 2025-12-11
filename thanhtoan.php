@@ -2,7 +2,7 @@
 session_start();
 include 'config/database.php';
 
-// 1. Kiểm tra đăng nhập
+
 if (!isset($_SESSION['user_id'])) {
     header("Location: dangnhap.php");
     exit();
@@ -10,7 +10,7 @@ if (!isset($_SESSION['user_id'])) {
 
 $user_id = $_SESSION['user_id'];
 
-// 2. Lấy thông tin giỏ hàng (PDO)
+
 $stmt_cart = $conn->prepare("
     SELECT gh.*, sp.ten, sp.gia, sp.hinhAnh 
     FROM GIO_HANG gh
@@ -31,24 +31,24 @@ foreach ($cart_items as $item) {
     $total_money += $item['gia'] * $item['soLuong'];
 }
 
-// 3. Lấy thông tin user (PDO)
+
 $stmt_user = $conn->prepare("SELECT * FROM NGUOI_DUNG WHERE nguoi_id = ?");
 $stmt_user->execute([$user_id]);
 $user_info = $stmt_user->fetch(PDO::FETCH_ASSOC);
 
 
-// --- XỬ LÝ ĐẶT HÀNG ---
+
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['btn_dat_hang'])) {
     $hoTen = $_POST['hoTen'];
     $sdt = $_POST['sdt'];
     $diaChi = $_POST['diaChi'];
     $ghiChu = $_POST['ghiChu'] ?? '';
-    $phuongThuc = $_POST['payment_method']; // COD hoặc Banking
+    $phuongThuc = $_POST['payment_method']; 
 
     try {
         $conn->beginTransaction();
 
-        // 1. Tạo đơn hàng
+       
         $stmt_order = $conn->prepare("
             INSERT INTO DON_HANG (nguoi_id, hoTenNguoiNhan, sdtNguoiNhan, diaChiGiaoHang, tongTien, phuongThucTT, trangThaiDH) 
             VALUES (?, ?, ?, ?, ?, ?, 'Cho xu ly')
@@ -56,7 +56,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['btn_dat_hang'])) {
         $stmt_order->execute([$user_id, $hoTen, $sdt, $diaChi, $total_money, $phuongThuc]);
         $donhang_id = $conn->lastInsertId();
 
-        // 2. Lưu chi tiết & Trừ kho
+       
         $stmt_detail = $conn->prepare("INSERT INTO CHI_TIET_DON_HANG (donhang_id, sanpham_id, soLuong, size, donGia) VALUES (?, ?, ?, ?, ?)");
         $stmt_stock = $conn->prepare("UPDATE SAN_PHAM SET soLuongTon = soLuongTon - ? WHERE sanpham_id = ?");
 
@@ -65,16 +65,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['btn_dat_hang'])) {
             $stmt_stock->execute([$item['soLuong'], $item['sanpham_id']]);
         }
 
-        // 3. Xóa giỏ hàng
+     
         $stmt_del = $conn->prepare("DELETE FROM GIO_HANG WHERE nguoi_id = ?");
         $stmt_del->execute([$user_id]);
 
         $conn->commit();
 
-        // === 4. XỬ LÝ THANH TOÁN ===
 
         if ($phuongThuc == 'Banking') {
-            // --- TÍCH HỢP MOMO (Code cũ của bạn) ---
+          
             include 'config/momo_config.php';
 
             $orderInfo = "Thanh toan don hang #" . $donhang_id;
@@ -83,8 +82,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['btn_dat_hang'])) {
             $requestId = time() . "";
             $extraData = "";
 
-            // SỬA LẠI ĐƯỜNG DẪN TRẢ VỀ CHO ĐÚNG LOCALHOST CỦA BẠN
-            // (Bạn tự thay đúng link web bạn đang chạy nhé)
             $returnUrl = "http://localhost/chuyennganh/xuly_momo.php";
             $notifyUrl = "http://localhost/chuyennganh/xuly_momo.php";
 
